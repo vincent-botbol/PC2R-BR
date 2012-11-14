@@ -13,14 +13,28 @@ class InterfaceTest(wx.Frame):
 
     def InitUI(self):
         vbox = wx.BoxSizer(wx.HORIZONTAL)
-        tc=wx.TextCtrl(self,value="Ceci est un test")
+        chatBox = wx.BoxSizer(wx.VERTICAL)
+        self.chatEntry = wx.TextCtrl(self,value="Tapez le texte ici",
+                                style=wx.TE_LEFT|wx.TE_PROCESS_ENTER)
+        self.tc=wx.TextCtrl(self,value="Ceci est un test",
+                       style=wx.TE_MULTILINE|wx.TE_READONLY|
+                       wx.TE_LEFT|wx.TE_BESTWRAP)
         tc.AppendText("un peu de test encore")
-        gs=wx.GridSizer(16,16,5,5)
+        gs=wx.GridSizer(16,16,0,0)
         for i in range(16*16) :
             gs.Add(wx.Button(self,label=str(i)),0,wx.EXPAND)
-        vbox.Add(gs, proportion=0, flag=wx.EXPAND)
-        vbox.Add(tc, proportion=0,flag=wx.EXPAND)
+        vbox.Add(gs, proportion=1, flag=wx.EXPAND)
+        chatBox.Add(tc, proportion=1,flag=wx.EXPAND)
+        chatBox.Add(chatEntry, proportion=0,flag=wx.EXPAND)
+        vbox.Add(chatBox, proportion=1,flag=wx.EXPAND)
         self.SetSizer(vbox)
+        self.Bind(wx.EVT_COMMAND_TEXT_ENTER,self.chatRelease)
+    
+#    def onClicked()
+#    def chatRelease(self,e):     
+#        e.Skip()
+
+# Créer une classe pour le chat = un nouveau widget
 
 if __name__ == '__main__':
     app = wx.App()
