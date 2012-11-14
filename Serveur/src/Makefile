@@ -1,12 +1,15 @@
 EXEC=serveur
 
 CC=ocamlfind ocamlc
-FLAGS=-package unix -package threads -thread -linkpkg
+FLAGS=-package str -package unix -package threads -thread -linkpkg
 
 SRC=serveur.ml
 OBJ=$(SRC:.ml=.cmo)
 
 all:$(EXEC)
+
+run: all
+	./$(EXEC)
 
 $(EXEC): $(OBJ)
 	$(CC) $(FLAGS) -o $@ $^

@@ -7,54 +7,67 @@ type client = { nom : string;
 
 let threads : Thread.t list ref = ref []
 
-let establish_server server_fun sockaddr =
-  let domain = domain_of_sockaddr sockaddr in
-  let sock = Unix.socket domain Unix.SOCK_STREAM 0 
-  in Unix.bind sock sockaddr ;
-    Unix.listen sock 3;
-    while true do
-      Printf.printf "mypid = %d\n%!" (getpid ());
-      let (s, caller) = Unix.accept sock
-      in
-	threads := (Thread.create (
-		     fun () -> 
-		       let inchan = Unix.in_channel_of_descr s 
-		       and outchan = Unix.out_channel_of_descr s 
-		       in server_fun inchan outchan ;
-			 close_in inchan ;
-			 close_out outchan ;
-			 close s
-		    ) ())::!threads
-	    done
+let clients = ref []
+
+open Str    
 
 (* adresse localhost : 127.0.1.1 *)
 let get_my_addr () =
   (Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)
+
+let my_input_line fd = 
+   let s = " "  and  r = ref "" 
+   in while (ThreadUnix.read fd s 0 1 > 0) && s.[0] <> '\n' do r := !r ^s done ;
+      !r
+
+let my_output_line fd str =
+  ignore (ThreadUnix.write fd str 0 (String.length str))
+
+let connexion_client s_descr =
+  let regex_conn = regexp "^CONNECT/\\([^/]+\\)/$" (* Marche sans le $ *)
+  and commande_recue = my_input_line s_descr in
+    Printf.printf "commande reçue : %s\n%!" commande_recue;
+    if string_match regex_conn commande_recue 0 then
+      let nom = matched_group 1 commande_recue in
+	my_output_line s_descr (Printf.sprintf "WELCOME/%s/\n" nom);
+	clients:={nom=nom; thread=Thread.self ()}::!clients
+    else
+      my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!")
+
+let stop_thread_client s_descr = 
+  Printf.printf "Fin d'un thread client\n%!";
+  Unix.close s_descr
+
+let demarrer_thread_client (s_descr, s_addr) =
+  Thread.create (fun () ->
+		   (try 
+		      connexion_client s_descr
+		    with  
+			exn  -> print_string (Printexc.to_string exn) ; print_newline());
+		   stop_thread_client s_descr
+		) ()
+
+
+let establish_server sockaddr =
+  let sock =  ThreadUnix.socket Unix.PF_INET Unix.SOCK_STREAM 0
+  in Unix.bind sock sockaddr ;
+    Unix.listen sock 3;
+    while true do
+      let (s_descr, s_addr) as arg = ThreadUnix.accept sock
+      in
+	(* Création du thread client *)
+	threads:=demarrer_thread_client arg::!threads
+    done
+
     
-let main_serveur serv_fun =
+let start_serveur () =
   try
     let port = 2012 in 
     let mon_adresse = get_my_addr()
-    in establish_server serv_fun  (Unix.ADDR_INET(mon_adresse, port))
+    in establish_server (Unix.ADDR_INET(mon_adresse, port))
   with
       Failure("int_of_string") -> 
         Printf.eprintf "serv_up : bad port number\n" ;;
 
-let connexion_client ic oc =
-  (* lire sur l'entrée : connect/nom sinon erreur *)
-  (* envoi welcome *)
-  (* .. *)
-  (* synchronize sur le jeu *)
-  ()
-
-let uppercase_service ic oc =
-  Printf.printf "serveur fun\n%!";
-  try while true do    
-    let s = input_line ic in 
-    let r = String.uppercase s 
-    in output_string oc (r^"\n") ; flush oc
-  done
-  with _ -> Printf.printf "Fin du traitement\n%!" ; exit 0
-
 let () =
-  main_serveur uppercase_service
+  start_serveur ()
