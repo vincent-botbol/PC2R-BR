@@ -1,3 +1,11 @@
+#Generic
+*~
+*.lock
+*.out
+*.swp
+*.DS_store
+
+#Ocaml
 *.annot
 *.cmo
 *.cma
@@ -7,3 +15,9 @@
 *.cmx
 *.cmxs
 *.cmxa
+
+#Java
+*.class
+
+#Python
+*.pyc
