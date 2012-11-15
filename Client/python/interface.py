@@ -14,9 +14,9 @@ class InterfaceTest(wx.Frame):
     def InitUI(self):
         vbox = wx.BoxSizer(wx.HORIZONTAL)
         chatBox = wx.BoxSizer(wx.VERTICAL)
-        self.chatEntry = wx.TextCtrl(self,value="Tapez le texte ici",
+        chatEntry = wx.TextCtrl(self,value="Tapez le texte ici",
                                 style=wx.TE_LEFT|wx.TE_PROCESS_ENTER)
-        self.tc=wx.TextCtrl(self,value="Ceci est un test",
+        tc = wx.TextCtrl(self,value="Ceci est un test",
                        style=wx.TE_MULTILINE|wx.TE_READONLY|
                        wx.TE_LEFT|wx.TE_BESTWRAP)
         tc.AppendText("un peu de test encore")
@@ -28,7 +28,7 @@ class InterfaceTest(wx.Frame):
         chatBox.Add(chatEntry, proportion=0,flag=wx.EXPAND)
         vbox.Add(chatBox, proportion=1,flag=wx.EXPAND)
         self.SetSizer(vbox)
-        self.Bind(wx.EVT_COMMAND_TEXT_ENTER,self.chatRelease)
+#        self.Bind(wx.EVT_COMMAND_TEXT_ENTER,self.chatRelease)
     
 #    def onClicked()
 #    def chatRelease(self,e):     
