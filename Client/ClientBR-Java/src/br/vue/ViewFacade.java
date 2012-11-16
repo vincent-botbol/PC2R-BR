@@ -1,24 +1,29 @@
 package br.vue;
 
 import java.awt.Container;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import br.modele.Jeu;
+import br.model.ModelFacade;
 import br.vue.components.ConnexionPane;
+import br.vue.components.GamePane;
 import br.vue.components.MainFrame;
 
-public class BRview {
+public class ViewFacade implements Observer {
 
 	@SuppressWarnings("unused")
-	private Jeu j;
+	private ModelFacade j;
 
 	private MainFrame mf;
 
-	public BRview(Jeu j) {
+	public ViewFacade(ModelFacade j) {
 		this.j = j;
+
+		// j.addObserver(this);
 
 		Runnable r = new Runnable() {
 
@@ -43,16 +48,22 @@ public class BRview {
 		mf = new MainFrame();
 
 		// Open Connexion interface
-		setFrameContent(new ConnexionPane());
+		setFrameContentPane(new ConnexionPane());
 	}
 
-	public void setFrameContent(Container c) {
+	public void setFrameContentPane(Container c) {
 		mf.setContentPane(c);
 		mf.pack();
 	}
 
 	public MainFrame getMf() {
 		return mf;
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

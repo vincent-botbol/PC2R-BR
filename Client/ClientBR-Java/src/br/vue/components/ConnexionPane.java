@@ -3,6 +3,8 @@ package br.vue.components;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -26,7 +28,6 @@ public class ConnexionPane extends JPanel {
 
 	public ConnexionPane() {
 		super();
-
 		setBorder(new TitledBorder("Connexion"));
 
 		setLayout(new GridBagLayout());
@@ -38,6 +39,15 @@ public class ConnexionPane extends JPanel {
 		server_label.setLabelFor(server);
 
 		connect = new JButton("Connexion");
+
+		connect.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showInfo("Va niquer ta mère!");
+
+			}
+		});
 
 		info_start = new JLabel();
 

@@ -1,6 +1,6 @@
 package br.run;
 
-import br.vue.BRview;
+import br.vue.ViewFacade;
 
 public class Main {
 
@@ -8,7 +8,7 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new BRview(null);
+		new ViewFacade(null);
 	}
 
 }
