@@ -1,5 +1,11 @@
 package br.model.logic;
 
-public class Chat {
+import br.model.ModelFacade;
 
+public class Chat {
+	private ModelFacade observable;
+
+	public Chat(ModelFacade modelFacade) {
+		this.observable = modelFacade;
+	}
 }

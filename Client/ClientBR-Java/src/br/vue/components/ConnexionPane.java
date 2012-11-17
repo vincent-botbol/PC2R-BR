@@ -44,8 +44,8 @@ public class ConnexionPane extends JPanel {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				showInfo("Va niquer ta mère!");
-
+				showInfo(login.getText());
+				System.out.println(login.getText());
 			}
 		});
 
