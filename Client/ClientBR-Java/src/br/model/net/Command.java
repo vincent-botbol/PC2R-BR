@@ -40,4 +40,8 @@ public abstract class Command<T extends Enum<T>> {
 	public T getCommand() {
 		return commandName;
 	}
+
+	public List<String> getArguments() {
+		return arguments;
+	}
 }

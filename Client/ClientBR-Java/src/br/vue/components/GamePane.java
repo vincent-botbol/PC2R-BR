@@ -47,6 +47,10 @@ public class GamePane extends JPanel {
 		gbc.gridy = 0;
 		add(chat, gbc);
 	}
+	
+	public LogPane getLog(){
+		return log;
+	}
 
 	private static final long serialVersionUID = 1L;
 }

@@ -1,5 +1,5 @@
 package br.common;
 
 public enum UpdateArguments {
-	CONNEXION_INIT, CONNEXION_FAILED;
+	CONNECTION_INIT, CONNECTION_FAILED, CONNECTION_SUCCESS;
 }

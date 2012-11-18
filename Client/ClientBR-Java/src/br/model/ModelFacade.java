@@ -37,12 +37,12 @@ public class ModelFacade extends Observable {
 	}
 
 	// Méthodes = Appels du controleur
-	public void connect(String host, int port, final String name) {
+	public void establishConnection(String host, int port, final String name) {
 		try {
 			// On prévient la vue que l'on est en train de se connecter
 			// et qu'elle doit désactiver le bouton connexion
 			setChanged();
-			notifyObservers(UpdateArguments.CONNEXION_INIT);
+			notifyObservers(UpdateArguments.CONNECTION_INIT);
 
 			// On initialise la connexion
 			cs = new ClientSocket(host, port);
@@ -52,13 +52,15 @@ public class ModelFacade extends Observable {
 					add(name);
 				}
 			});
+			System.out.println("Envoi du connect");
 			// On envoie la requête CONNNECT/xxx au serveur
-			cs.establishConnexion(r);
+			cs.makeRequest(r);
 			// On crée et on commence à écouter les requêtes entrantes
 			cdi = new CommandDispatcher(cs, gg, chat, this);
 			// Le command dispatcher effectuera une action
 			// si un welcome est reçue
-			cdi.startListening();
+			cdi.execute();
+			System.out.println("En écoute");
 			return;
 		} catch (UnknownHostException e) {
 			JOptionPane.showMessageDialog(null, "L'hôte distant ne répond pas",
@@ -70,7 +72,7 @@ public class ModelFacade extends Observable {
 		}
 		// Si la connexion s'est mal passée on prévient la vue de réactiver le
 		// bouton
-		notifyObservers(UpdateArguments.CONNEXION_FAILED);
+		notifyObservers(UpdateArguments.CONNECTION_FAILED);
 	}
 
 	public void processClick(Point p) {

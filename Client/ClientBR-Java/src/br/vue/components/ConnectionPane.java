@@ -3,8 +3,6 @@ package br.vue.components;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -13,7 +11,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
-public class ConnexionPane extends JPanel {
+public class ConnectionPane extends JPanel {
 
 	private final JLabel login_label = new JLabel("Pseudo"),
 			server_label = new JLabel("Serveur");
@@ -26,33 +24,25 @@ public class ConnexionPane extends JPanel {
 
 	private GridBagConstraints gbc;
 
-	public ConnexionPane() {
+	public ConnectionPane() {
 		super();
 		setBorder(new TitledBorder("Connexion"));
 
 		setLayout(new GridBagLayout());
 
-		login = new JTextField(20);
+		login = new JTextField("Test", 20);
 		login_label.setLabelFor(login);
 
-		server = new JTextField(20);
+		server = new JTextField("localhost", 20);
 		server_label.setLabelFor(server);
 
 		connect = new JButton("Connexion");
-
-		connect.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				showInfo(login.getText());
-				System.out.println(login.getText());
-			}
-		});
 
 		info_start = new JLabel();
 
 		gbc = new GridBagConstraints();
 		addComponents();
+		
 	}
 
 	private void addComponents() {
@@ -95,6 +85,18 @@ public class ConnexionPane extends JPanel {
 		} else {
 			info_start.setText(s);
 		}
+	}
+
+	public JButton getConnect() {
+		return connect;
+	}
+
+	public String getHost() {
+		return server.getText();
+	}
+
+	public String getLogin() {
+		return login.getText();
 	}
 
 	private static final long serialVersionUID = 1L;
