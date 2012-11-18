@@ -17,7 +17,7 @@ public class GridPane extends JPanel {
 		setMinimumSize(new Dimension(200, 200));
 		setPreferredSize(new Dimension(600, 600));
 
-		setBackground(Color.red);
+		setBackground(Color.green);
 	}
 
 	private static final long serialVersionUID = 1L;

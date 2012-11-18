@@ -42,6 +42,7 @@ public class ChatPane extends JPanel {
 		setLayout(new GridBagLayout());
 
 		conversation = new JTextArea();
+		conversation.setMinimumSize(new Dimension(0, 50));
 		scroll = new JScrollPane(conversation);
 		conversation.setEditable(false);
 

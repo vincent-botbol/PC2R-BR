@@ -9,7 +9,6 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import br.model.ModelFacade;
-import br.vue.components.ConnexionPane;
 import br.vue.components.GamePane;
 import br.vue.components.MainFrame;
 
@@ -48,7 +47,7 @@ public class ViewFacade implements Observer {
 		mf = new MainFrame();
 
 		// Open Connexion interface
-		setFrameContentPane(new ConnexionPane());
+		setFrameContentPane(new GamePane());
 	}
 
 	public void setFrameContentPane(Container c) {
