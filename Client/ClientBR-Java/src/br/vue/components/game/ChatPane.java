@@ -86,6 +86,12 @@ public class ChatPane extends JPanel {
 		gbc.gridx++;
 		add(sendButton, gbc);
 	}
+	
+
+	public JButton getSendButton() {
+		return sendButton;
+	}
+
 
 	private static final long serialVersionUID = 1L;
 }

@@ -6,8 +6,7 @@
 *.DS_store
 \#*
 *.\#*
-*/.metadata/*
-*/.settings/*
+Client/.metadata/*
 
 #Ocaml
 *.annot

@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Observable;
 
 import javax.swing.JOptionPane;
@@ -37,12 +38,18 @@ public class ModelFacade extends Observable {
 	}
 
 	// Méthodes = Appels du controleur
-	public void establishConnection(String host, int port, final String name) {
+	public void establishConnection(String host, final String name) {
+		this.establishConnection(host, name, 2012);
+	}
+
+	public void establishConnection(String host, final String name, int port) {
 		try {
 			// On prévient la vue que l'on est en train de se connecter
-			// et qu'elle doit désactiver le bouton connexion
 			setChanged();
 			notifyObservers(UpdateArguments.CONNECTION_INIT);
+
+			// Problème de freeze ici : mettre un thread
+			// à voir
 
 			// On initialise la connexion
 			cs = new ClientSocket(host, port);
@@ -52,26 +59,23 @@ public class ModelFacade extends Observable {
 					add(name);
 				}
 			});
-			System.out.println("Envoi du connect");
 			// On envoie la requête CONNNECT/xxx au serveur
 			cs.makeRequest(r);
+			System.out.println("Après 2:" + new Date());
 			// On crée et on commence à écouter les requêtes entrantes
 			cdi = new CommandDispatcher(cs, gg, chat, this);
-			// Le command dispatcher effectuera une action
-			// si un welcome est reçue
+			// Lancement de la boucle d'écoute du dispatcher
 			cdi.execute();
-			System.out.println("En écoute");
 			return;
 		} catch (UnknownHostException e) {
 			JOptionPane.showMessageDialog(null, "L'hôte distant ne répond pas",
 					"Erreur de connexion", JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null,
-					"Erreur d'ouverture des canaux de communication",
+					"Erreur lors de l'ouverture des canaux de communication",
 					"Erreur I/O", JOptionPane.ERROR_MESSAGE);
 		}
-		// Si la connexion s'est mal passée on prévient la vue de réactiver le
-		// bouton
+		setChanged();
 		notifyObservers(UpdateArguments.CONNECTION_FAILED);
 	}
 

@@ -1,6 +1,6 @@
 package br.run;
 
-import br.controller.TestController;
+import br.controller.ControllerFacade;
 import br.model.ModelFacade;
 import br.vue.ViewFacade;
 
@@ -13,7 +13,7 @@ public class Main {
 		ModelFacade model = new ModelFacade();
 		ViewFacade vue = new ViewFacade(model);
 		@SuppressWarnings("unused")
-		TestController tc = new TestController(model, vue);
+		ControllerFacade tc = new ControllerFacade(model, vue);
 	}
 
 }

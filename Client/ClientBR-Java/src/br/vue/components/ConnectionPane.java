@@ -42,7 +42,7 @@ public class ConnectionPane extends JPanel {
 
 		gbc = new GridBagConstraints();
 		addComponents();
-		
+
 	}
 
 	private void addComponents() {
@@ -75,15 +75,16 @@ public class ConnectionPane extends JPanel {
 	 * @param s
 	 */
 	public void showInfo(String s) {
+		String text = "<html>" + s.replace("\n", "<br/>");
 		// Dynamic resize
 		if (info_start.getText().isEmpty()) {
 			gbc.gridy++;
 			gbc.anchor = GridBagConstraints.CENTER;
-			info_start.setText(s);
+			info_start.setText(text);
 			add(info_start, gbc);
 			SwingUtilities.getWindowAncestor(this).pack();
 		} else {
-			info_start.setText(s);
+			info_start.setText(text);
 		}
 	}
 

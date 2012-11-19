@@ -55,7 +55,7 @@ public class ClientSocket {
 		List<String> list = new ArrayList<>();
 		for (int i = 1; i < command.length; i++)
 			list.add(command[i]);
-		
+
 		return new Response(command[0], list);
 	}
 
