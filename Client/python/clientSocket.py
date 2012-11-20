@@ -13,6 +13,9 @@ class ClientSocket():
             self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         except socket.error as msg :
             self.sock = None
+        
+    
+    def connect(self, host, port):
         try:
             self.sock.settimeout(self.timeout)
             self.sock.connect((self.servAddr,2012))
@@ -22,23 +25,19 @@ class ClientSocket():
         if self.sock is None:
             print 'couldn\'t open socket, go fuck yourself'
             self=None
-            
-    def mysend(self, msg):
-        totalsent = 0
-        while totalsent < MSGLEN:
-            sent = self.sock.send(msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
 
-    def myreceive(self):
-        msg = ''
-        while len(msg) < MSGLEN:
-            chunk = self.sock.recv(MSGLEN-len(msg))
-            if chunk == '':
-                raise RuntimeError("socket connection broken")
-            msg = msg + chunk
-        return msg
+    def send(self, msg):
+        return  self.sock.send()
+
+    def receive(self):
+        return self.sock.recv()
+
+    def close(self):
+        self.sock.close()
+    
+    def setTimeOut(timeout):
+        self.sock.settimeout(timeout)
+
 
 if __name__ == '__main__':
     client = ClientSocket("localhost")
