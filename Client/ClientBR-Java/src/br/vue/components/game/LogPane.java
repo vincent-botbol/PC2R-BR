@@ -2,12 +2,9 @@ package br.vue.components.game;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -36,18 +33,13 @@ public class LogPane extends JScrollPane {
 		setViewportView(textlog);
 		setMinimumSize(new Dimension(0, 100));
 		setPreferredSize(getMinimumSize());
-
-		textlog.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				ajouterMessage(
-						"Moi",
-						"ta race",
-						new Color(new Random().nextInt(256), new Random()
-								.nextInt(256), new Random().nextInt(256)));
-				super.mouseClicked(e);
-			}
-		});
+		/*
+		 * textlog.addMouseListener(new MouseAdapter() {
+		 * 
+		 * @Override public void mouseClicked(MouseEvent e) { ajouterMessage(
+		 * "Moi", "ta race", new Color(new Random().nextInt(256), new Random()
+		 * .nextInt(256), new Random().nextInt(256))); } });
+		 */
 	}
 
 	public void ajouterMessage(String origin, String info, Color c) {

@@ -18,7 +18,7 @@ public class ConnectionPane extends JPanel {
 
 	private JTextField login, server;
 
-	private JButton connect;
+	private JButton connect, cancel;
 
 	private JLabel info_start;
 
@@ -37,6 +37,10 @@ public class ConnectionPane extends JPanel {
 		server_label.setLabelFor(server);
 
 		connect = new JButton("Connexion");
+		connect.setActionCommand("CONNECT");
+		cancel = new JButton("Annuler");
+		cancel.setActionCommand("CANCEL");
+		cancel.setEnabled(false);
 
 		info_start = new JLabel();
 
@@ -48,6 +52,7 @@ public class ConnectionPane extends JPanel {
 	private void addComponents() {
 		gbc.insets = new Insets(5, 5, 5, 5);
 
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.anchor = GridBagConstraints.LINE_START;
 		gbc.gridx = gbc.gridy = 0;
 		add(server_label, gbc);
@@ -63,10 +68,12 @@ public class ConnectionPane extends JPanel {
 		add(login, gbc);
 
 		gbc.gridy++;
-		gbc.gridx = 0;
-		gbc.gridwidth = 2;
+		gbc.gridx = 1;
+		gbc.gridwidth = 1;
 		gbc.anchor = GridBagConstraints.LINE_END;
 		add(connect, gbc);
+		gbc.gridy++;
+		add(cancel, gbc);
 	}
 
 	/**
@@ -76,20 +83,26 @@ public class ConnectionPane extends JPanel {
 	 */
 	public void showInfo(String s) {
 		String text = "<html>" + s.replace("\n", "<br/>");
-		// Dynamic resize
+		// Dynamic resize - trick #342
 		if (info_start.getText().isEmpty()) {
+			gbc.gridx = 0;
 			gbc.gridy++;
 			gbc.anchor = GridBagConstraints.CENTER;
-			info_start.setText(text);
+			gbc.gridwidth = 2;
+
 			add(info_start, gbc);
-			SwingUtilities.getWindowAncestor(this).pack();
-		} else {
-			info_start.setText(text);
 		}
+
+		info_start.setText(text);
+		SwingUtilities.getWindowAncestor(this).pack();
 	}
 
 	public JButton getConnect() {
 		return connect;
+	}
+
+	public JButton getCancel() {
+		return cancel;
 	}
 
 	public String getHost() {

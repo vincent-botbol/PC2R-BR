@@ -1,35 +1,29 @@
 package br.model;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Observable;
-
-import javax.swing.JOptionPane;
 
 import br.common.UpdateArguments;
 import br.model.logic.Chat;
 import br.model.logic.GameGrid;
-import br.model.logic.Player;
+import br.model.logic.Players;
 import br.model.net.ClientSocket;
-import br.model.net.ERequest;
-import br.model.net.Request;
 
 public class ModelFacade extends Observable {
 
-	private GameGrid gg;
+	private GameGrid grid;
 	// on verra plus tard pour les players
-	private Player[] players;
+	private Players players;
 	private Chat chat;
+	private ConnectThread connectThread;
+	private CommandDispatcher dispatcher;
 
-	private CommandDispatcher cdi;
-	private ClientSocket cs;
+	private ClientSocket clientSocket;
 
 	public ModelFacade() {
-		chat = new Chat(this);
-		gg = new GameGrid(this);
+		this.chat = new Chat(this);
+		this.grid = new GameGrid(this);
 	}
 
 	@Override
@@ -39,62 +33,78 @@ public class ModelFacade extends Observable {
 
 	// Méthodes = Appels du controleur
 	public void establishConnection(String host, final String name) {
-		this.establishConnection(host, name, 2012);
+		this.establishConnection(name, host, 2012);
 	}
 
-	public void establishConnection(String host, final String name, int port) {
-		try {
-			// On prévient la vue que l'on est en train de se connecter
-			setChanged();
-			notifyObservers(UpdateArguments.CONNECTION_INIT);
+	/*
+	 * - Initialisation de la socket - Connexion au serveur - Départ du
+	 * scheduler (après la connexion) - Initialisation des joueurs (seulement
+	 * avec notre pseudo)
+	 */
+	// sync avec le cancel pour être sûr
+	public synchronized void establishConnection(final String name,
+			final String host, final int port) {
 
-			// Problème de freeze ici : mettre un thread
-			// à voir
+		connectThread = new ConnectThread(this, name, host, port);
+		connectThread.start();
+	}
 
-			// On initialise la connexion
-			cs = new ClientSocket(host, port);
-
-			Request r = new Request(ERequest.CONNECT, new ArrayList<String>() {
-				{
-					add(name);
-				}
-			});
-			// On envoie la requête CONNNECT/xxx au serveur
-			cs.makeRequest(r);
-			System.out.println("Après 2:" + new Date());
-			// On crée et on commence à écouter les requêtes entrantes
-			cdi = new CommandDispatcher(cs, gg, chat, this);
-			// Lancement de la boucle d'écoute du dispatcher
-			cdi.execute();
-			return;
-		} catch (UnknownHostException e) {
-			JOptionPane.showMessageDialog(null, "L'hôte distant ne répond pas",
-					"Erreur de connexion", JOptionPane.ERROR_MESSAGE);
-		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null,
-					"Erreur lors de l'ouverture des canaux de communication",
-					"Erreur I/O", JOptionPane.ERROR_MESSAGE);
-		}
+	public synchronized void cancelConnection() {
+		/*
+		 * Si on annule la connexion trop tard (i.e, avant l'arrivée d'un
+		 * deuxième joueur lorsque l'on est tout seul) , on ferme la connexion
+		 * déjà établie
+		 */
+		// arrête également le worker
+		this.connectThread.interrupt();
 		setChanged();
-		notifyObservers(UpdateArguments.CONNECTION_FAILED);
+		notifyObservers(UpdateArguments.CONNECTION_ABORTED);
 	}
 
-	public void processClick(Point p) {
-		gg.processClick(p);
+	public void processClick(Point p, Graphics2D graphics) {
+		grid.processClick(p, graphics);
 	}
 
 	// Getters : State Query de la vue
 
 	public GameGrid getGrid() {
-		return gg;
+		return this.grid;
 	}
 
-	public Player[] getPlayers() {
-		return players;
+	public Players getPlayers() {
+		return this.players;
 	}
 
 	public Chat getChat() {
-		return chat;
+		return this.chat;
+	}
+
+	public void closeSocket() {
+		try {
+			clientSocket.close();
+		} catch (NullPointerException e) { // pour pas de prise de tête
+		}
+	}
+
+	// package visibility pour les threads de connexion et d'écoute
+	void setClientSocket(ClientSocket cs) {
+		this.clientSocket = cs;
+	}
+
+	ClientSocket getClientSocket() {
+		return this.clientSocket;
+	}
+
+	void setPlayers(Players players) {
+		this.players = players;
+	}
+
+	CommandDispatcher getDispatcher() {
+		return dispatcher;
+	}
+
+	void setDispatcher(CommandDispatcher dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 }

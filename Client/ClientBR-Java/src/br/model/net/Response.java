@@ -5,7 +5,8 @@ import java.util.List;
 
 public class Response extends Command<EResponse> {
 
-	Response(String commandName, List<String> arguments) throws ParseException {
+	public Response(String commandName, List<String> arguments)
+			throws ParseException {
 		super(commandName, arguments, EResponse.class);
 	}
 }

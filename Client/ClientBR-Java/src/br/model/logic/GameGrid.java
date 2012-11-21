@@ -1,5 +1,6 @@
 package br.model.logic;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 
 import br.model.ModelFacade;
@@ -13,7 +14,7 @@ public class GameGrid {
 		this.observable = modelFacade;
 	}
 
-	public void processClick(Point p) {
+	public void processClick(Point p, Graphics2D graphics) {
 
 	}
 

@@ -24,9 +24,10 @@ public class ControllerFacade {
 
 	private void addListeners() {
 		// Connexion
-		// Bouton de la fenêtre de connexion
-		view.getConnexionPane().getConnect()
-				.addActionListener(new ConnectListener(model, view));
+		// Boutons de la fenêtre de connexion
+		ConnectListener cl = new ConnectListener(model, view);
+		view.getConnexionPane().getConnect().addActionListener(cl);
+		view.getConnexionPane().getCancel().addActionListener(cl);
 
 		// GamePane
 		// Chat

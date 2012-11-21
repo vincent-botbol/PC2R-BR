@@ -10,7 +10,10 @@ import br.vue.ViewFacade;
 
 public class MainFrameListener extends WindowAdapter {
 
+	private ModelFacade model;
+
 	public MainFrameListener(ModelFacade model, ViewFacade view) {
+		this.model = model;
 	}
 
 	@Override
@@ -19,6 +22,7 @@ public class MainFrameListener extends WindowAdapter {
 		if (JOptionPane.showConfirmDialog(null,
 				"Voulez-vous vraiment quitter?", "AWINNERISNOTYOU",
 				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+			model.closeSocket();
 			System.exit(0);
 		}
 

@@ -35,14 +35,23 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 		synchronized (lock) {
 			if (argument != null && argument instanceof UpdateArguments) {
 				switch ((UpdateArguments) argument) {
+				case CONNECTION_INIT:
+					conn.getConnect().setEnabled(false);
+					conn.getCancel().setEnabled(true);
+					conn.showInfo("Connexion en cours");
+					break;
+				case CONNECTION_ABORTED:
+					conn.getConnect().setEnabled(true);
+					conn.getCancel().setEnabled(false);
+					conn.showInfo("Connexion annulée");
+					break;
 				case CONNECTION_FAILED:
 					conn.getConnect().setEnabled(true);
 					conn.showInfo("Impossible de se connecter au serveur\n"
 							+ "Vérifiez vos données");
+					conn.getCancel().setEnabled(false);
 					break;
-				case CONNECTION_INIT:
-					conn.getConnect().setEnabled(false);
-					break;
+
 				case CONNECTION_SUCCESS:
 					System.out.println("CONNECTION SUCCESS !!");
 					mf.setFrameContentPane(game);
@@ -51,6 +60,7 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 							"Bienvenue " + model.getGrid().getLogin(),
 							Color.GREEN);
 					break;
+
 				default:
 					break;
 				}

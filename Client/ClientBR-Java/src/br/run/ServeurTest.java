@@ -1,5 +1,12 @@
 package br.run;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -10,90 +17,168 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
+
+import br.vue.components.game.LogPane;
+
 public class ServeurTest {
 
-    InetAddress adr;
-    ServerSocket sock;
+	InetAddress adr;
+	ServerSocket sock;
+	JFrame jf;
+	JButton send;
+	LogPane pane;
+	JTextField command;
+	JScrollPane jsp;
+	JPanel jp;
 
-    public ServeurTest() {
-        try {
-            sock = new ServerSocket(2012);
-            System.out.println("Serveur à l'écoute sur le port : " + sock.getLocalPort());
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+	PrintWriter out;
+	BufferedReader in;
 
-    public void startServer() {
-        System.out.println("En attente de client");
+	public ServeurTest() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				createAndShowGUI();
+			}
+		});
+	}
 
-        try (Socket client = sock.accept()) {
-            System.out.println("Client connecté");
+	void createAndShowGUI() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+		}
 
-            final PrintWriter out = new PrintWriter(
-                    new BufferedWriter(
-                    new OutputStreamWriter(client.getOutputStream())));
-            final BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            //Lecture continue des messages du client
-            Thread lecture = new Thread() {
+		jf = new JFrame("Serveur test");
+		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-                @Override
-                public void run() {
-                    while (true) {
-                        synchronized (this) {
-                            try {
-                                System.out.println("Reçue commande client : " + in.readLine());
-                                System.out.print("Command$ ");
-                                System.out.flush();
-                            } catch (IOException ex) {
-                                break;
-                            }
-                        }
-                    }
-                    System.out.println("WESH");
-                }
-            };
+		jp = new JPanel();
+		pane = new LogPane();
 
-            Thread écriture = new Thread() {
+		send = new JButton("Lancer le serveur");
+		command = new JTextField();
 
-                @Override
-                public void run() {
-                    String command = "";
-                    BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in));
-                    while (!command.trim().equals("quit")) {
-                        synchronized (this) {
-                            try {
-                                System.out.print("Command$ ");
-                                command = consoleIn.readLine();
-                                System.out.println("Envoi de " + command + " au client");
-                                out.printf("%s\n", command);
-                                out.flush();
-                            } catch (IOException ex) {
-                                break;
-                            }
-                        }
-                    }
-                    System.out.println("WESH");
-                }
-            };
+		ActionListener al;
+		send.addActionListener(al = new ActionListener() {
+			boolean isStarted = false;
 
-            lecture.start();
-            écriture.start();
-            try {
-                écriture.join();
-            } catch (InterruptedException ex) {
-            	ex.printStackTrace();
-            }
-            out.close();
-            in.close();
-            client.close();
-        } catch (IOException ex) {
-            System.out.println("Déconnexion du client ?");
-            ex.printStackTrace();
-        }
-    }
-    
-     public static void main(String[] args) {
-        new ServeurTest().startServer();
-    }
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if (!isStarted) {
+					send.setEnabled(false);
+					send.setText("Envoyer");
+					jf.pack();
+					new SwingWorker<Void, Void>() {
+						public Void doInBackground() {
+							startServer();
+							return null;
+						};
+					}.execute();
+					isStarted = true;
+				} else {
+					synchronized (this) {
+						// out.println(command.getText());
+						out.printf("%s\n", command.getText());
+						out.flush();
+						appendLine("Commande envoyée : " + command.getText());
+						command.setText("");
+					}
+				}
+			}
+		});
+
+		command.addActionListener(al);
+
+		jp.setPreferredSize(new Dimension(400, 400));
+		jp.setLayout(new GridBagLayout());
+
+		GridBagConstraints gbc = new GridBagConstraints();
+
+		gbc.insets = new Insets(5, 5, 5, 5);
+
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.gridx = gbc.gridy = 0;
+		gbc.gridwidth = 2;
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.weighty = 1;
+		jp.add(pane, gbc);
+
+		gbc.anchor = GridBagConstraints.LINE_START;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.weightx = 1;
+		gbc.gridwidth = 1;
+		gbc.weighty = 0;
+		gbc.gridy++;
+		jp.add(command, gbc);
+		gbc.weightx = 0;
+		gbc.gridx++;
+		gbc.anchor = GridBagConstraints.LINE_END;
+		gbc.fill = GridBagConstraints.NONE;
+		jp.add(send, gbc);
+
+		jf.setContentPane(jp);
+
+		jf.setVisible(true);
+		jf.pack();
+	}
+
+	// ouverture socket + attente de lecture
+	public synchronized void startServer() {
+		try {
+			sock = new ServerSocket(2012);
+			appendLine("Serveur à l'écoute sur le port : "
+					+ sock.getLocalPort());
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+
+		while (true) {
+			appendLine("En attente d'un client");
+			try (Socket client = sock.accept()) {
+				send.setEnabled(true);
+				appendLine("Client connecté");
+
+				out = new PrintWriter(new BufferedWriter(
+						new OutputStreamWriter(client.getOutputStream())));
+				/*
+				 * why ? :'(
+				 * out = new PrintWriter(new BufferedWriter( new
+				 * OutputStreamWriter(client.getOutputStream())), true);
+				 */
+				in = new BufferedReader(new InputStreamReader(
+						client.getInputStream()));
+
+				// Lecture continue des messages du client
+				String str;
+				synchronized (this) {
+					while ((str = in.readLine()) != null)
+						appendLine("Commande reçue : " + str);
+				}
+				out.close();
+				in.close();
+				appendLine("Client déconnecté");
+
+			} catch (IOException e) {
+				appendLine("Client déconnecté");
+				send.setEnabled(false);
+			}
+		}
+	}
+
+	void appendLine(String str) {
+		pane.ajouterMessage("", str, Color.black);
+	}
+
+	public static void main(String[] args) {
+		new ServeurTest();
+	}
 }

@@ -16,12 +16,20 @@ public class ConnectListener implements ActionListener {
 		this.vue = vue;
 	}
 
+	// Problème double click, 2 actions performed, 2 fois plus de merde
+	// A DEMAIN !
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-
-		String host = vue.getConnexionPane().getHost();
-		String pseudo = vue.getConnexionPane().getLogin();
-		model.establishConnection(host, pseudo);
+		switch (arg0.getActionCommand()) {
+		case "CONNECT":
+			String host = vue.getConnexionPane().getHost();
+			String pseudo = vue.getConnexionPane().getLogin();
+			model.establishConnection(host, pseudo);
+			break;
+		case "CANCEL":
+			model.cancelConnection();
+			break;
+		}
 
 	}
 
