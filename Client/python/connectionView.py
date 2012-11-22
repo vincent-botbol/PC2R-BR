@@ -4,12 +4,34 @@
 import wx
 import clientView
 import clientSocket
+import time
+
+class AbortDialog(wx.Frame):
+    def __init__(self,parent,title,message):
+        super(AbortDialog, self).__init__(parent,-1,title)
+        self.parent = parent
+        self.message = message
+        self.InitUI()
+        self.Show()
+
+    def InitUI(self):
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        text = wx.StaticText(self,-1,self.message)
+        button = wx.Button(self,wx.ID_CANCEL,"Annuler")
+        vbox.Add(text)
+        vbox.Add(button)
+        self.SetSizer(vbox)
+        button.Bind(wx.EVT_BUTTON, self.onClose)
+
+    def onClose(self,e):
+        e.Skip()
+        
 
 class connectionView(wx.Frame):
 
     def __init__(self,parent,title):
         super(connectionView,self).__init__(parent,title=title)
-        self.waitingoccupy = 0
+        self.occupy = 0
         self.InitUI()
         self.Centre()
         self.Show()
@@ -40,16 +62,16 @@ class connectionView(wx.Frame):
         self.Close()
 
     def onConnect(self,event):
-        self.buttonEnter.setValue(True)
-        if(self.occupy==0):
-            self.occupy = 1
-            #traitement de la connection
-            self.occupy = 0
-            clientView.ClientView(None, title='Battle Royale')
-            self.Close()
-        else :
-            print "occupé"
-
+        self.buttonEnter.SetValue(True)
+        self.buttonEnter.Disable()
+        #dial = wx.MessageDialog(None,"Connection en cours, veuillez patienter","Connection"
+        #                        ,style=wx.CANCEL|wx.ICON_EXCLAMATION)
+        dial = AbortDialog(self,"annuler","annuler la connection")
+        dial.Bind(wx.EVT_BUTTON,self.onQuit,id=wx.ID_CANCEL) #Permet de rediriger les annulations
+        
+        clientView.ClientView(None, title='Battle Royale')
+        #self.Close()
+        
 if __name__ == '__main__':
     app = wx.App()
     connectionView(None,title="Connection")
