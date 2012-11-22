@@ -19,6 +19,7 @@ public class ViewFacade implements Observer {
 	private MainFrame mf;
 	private ConnectionPane conn;
 	private GamePane game;
+	private boolean isReady;
 
 	public ViewFacade(ModelFacade model) {
 		this.model = model;
@@ -49,6 +50,8 @@ public class ViewFacade implements Observer {
 
 		mf.setFrameContentPane(conn);
 		game.getGrid().requestFocusInWindow();
+
+		this.isReady = true;
 		this.notifyAll();
 	}
 
@@ -67,6 +70,10 @@ public class ViewFacade implements Observer {
 
 	public GamePane getGame() {
 		return game;
+	}
+
+	public boolean isReady() {
+		return isReady;
 	}
 
 }

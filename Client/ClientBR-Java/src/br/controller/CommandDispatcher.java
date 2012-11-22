@@ -1,4 +1,4 @@
-package br.model;
+package br.controller;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -9,46 +9,64 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 import br.common.UpdateArguments;
-import br.model.logic.Chat;
-import br.model.logic.GameGrid;
-import br.model.net.ClientSocket;
-import br.model.net.Response;
+import br.controller.net.ClientSocket;
+import br.controller.net.Response;
+import br.model.ModelFacade;
 
 class CommandDispatcher extends SwingWorker<Void, Response> {
 
-	private ClientSocket cs;
 	private ModelFacade model;
-	private GameGrid grid;
+	private Controller control;
+	private ClientSocket socket;
+	private int port;
+	private String host;
+	private String pseudo;
 
-	@SuppressWarnings("unused")
-	private Chat chat;
-
-	public CommandDispatcher(ModelFacade obs) {
-		this.model = obs;
+	public CommandDispatcher(Controller control, ModelFacade model,
+			String pseudo, String host, int port) {
+		this.control = control;
+		this.model = model;
+		this.pseudo = pseudo;
+		this.host = host;
+		this.port = port;
 	}
 
 	@Override
 	protected Void doInBackground() {
 		try {
-			System.out.println("On attend les réponses");
-			Response r = null;
+			socket = new ClientSocket(pseudo, host, port);
+		} catch (IOException e) {
+			if (!isCancelled()) {
+				model.notifyView(UpdateArguments.CONNECTION_FAILED);
+				System.out.println("failed : " + e.getMessage());
+			}
+			return null;
+		}
+
+		control.setSocket(socket);
+
+		return startReadingLoop();
+	}
+
+	private Void startReadingLoop() {
+		try {
+			System.out.println("Connexion établie - En attente");
+			Response r;
 			while (true) {
 				try {
-					// Problème : soit le serveur n'envoie rien
-					// Soit y a un problème dans le read
-					// => plus côté serveur mais bon.
-					r = cs.receiveResponse();
+					r = socket.receiveResponse();
 					System.out.println("DEBUG : Response reçue = " + r);
-					dispatch(r);
+					publish(r);
 				} catch (ParseException e) {
-					System.err
-							.println("Parsing response : unknown protocol command");
+					System.err.println(e.getMessage());
 				}
-				publish(r);
 			}
 		} catch (InterruptedIOException e) {
-			// dans le cas où l'on a fait un cancel(true) (i.e : après
-			// l'établissement de la connexion)
+			try {
+				socket.close();
+			} catch (IOException e1) {
+				System.out.println("erreur close socket");
+			}
 			System.out.println("WORKER ARRETE PAR INTERRUPT");
 		} catch (IOException e) {
 			System.err.println("Error : connexion lost");
@@ -56,6 +74,11 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 					JOptionPane.ERROR_MESSAGE);
 		}
 		return null;
+	}
+
+	protected void process(List<Response> chunks) {
+		for (Response r : chunks)
+			dispatch(r);
 	}
 
 	private void dispatch(Response r) {
@@ -98,9 +121,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	}
 
 	private void welcomeProcess(List<String> arg) {
-		grid.setLogin(arg.get(0));
-		model.setChanged();
-		model.notifyObservers(UpdateArguments.CONNECTION_SUCCESS);
+		model.gotWelcomed(arg.get(0));
 	}
 
+	public ClientSocket getSocket() {
+		return socket;
+	}
 }

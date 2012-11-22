@@ -1,4 +1,4 @@
-package br.controller;
+package br.controller.listeners;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;

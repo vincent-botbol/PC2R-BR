@@ -1,6 +1,6 @@
 package br.run;
 
-import br.controller.ControllerFacade;
+import br.controller.Controller;
 import br.model.ModelFacade;
 import br.vue.ViewFacade;
 
@@ -10,7 +10,7 @@ public class Main {
 		ModelFacade model = new ModelFacade();
 		ViewFacade vue = new ViewFacade(model);
 		@SuppressWarnings("unused")
-		ControllerFacade cont = new ControllerFacade(model, vue);
+		Controller cont = new Controller(model, vue);
 
 	}
 

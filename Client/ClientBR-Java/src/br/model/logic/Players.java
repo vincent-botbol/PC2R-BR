@@ -9,10 +9,6 @@ public class Players {
 	// Ordonnés par tour de jeu
 	private List<String> allPlayers;
 
-	public Players(String myPseudo) {
-		this.myPseudo = myPseudo;
-	}
-
 	public void setOtherPlayersName(List<String> allPlayers) {
 		this.allPlayers = allPlayers;
 	}
@@ -24,4 +20,9 @@ public class Players {
 	public String getMyPseudo() {
 		return myPseudo;
 	}
+
+	public void setMyPseudo(String myPseudo) {
+		this.myPseudo = myPseudo;
+	}
+
 }

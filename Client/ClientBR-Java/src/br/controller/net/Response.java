@@ -1,4 +1,4 @@
-package br.model.net;
+package br.controller.net;
 
 import java.text.ParseException;
 import java.util.List;

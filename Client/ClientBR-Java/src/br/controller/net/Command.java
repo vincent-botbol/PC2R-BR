@@ -1,4 +1,4 @@
-package br.model.net;
+package br.controller.net;
 
 import java.text.ParseException;
 import java.util.List;
@@ -23,7 +23,7 @@ public abstract class Command<T extends Enum<T>> {
 		try {
 			return Enum.valueOf(c, str);
 		} catch (IllegalArgumentException e) {
-			throw new ParseException(e.getMessage(), 0);
+			throw new ParseException("Unknown protocol command : " + str, 0);
 		}
 	}
 
