@@ -22,14 +22,23 @@ public class TestWriteRead {
 		sc.configureBlocking(false);
 		sc.connect(new InetSocketAddress("localhost", 2012));
 
-		sc.configureBlocking(true);
+		System.out.println("avant");
 		sc.finishConnect();
-		ByteBuffer b = ByteBuffer.allocate(128);
-		while (sc.read(b) >= 0) {
-			System.out.println(new String(b.array()).trim());
-			b.clear();
-			System.out.println("test");
-		}
+		sc.configureBlocking(true);
+
+		System.out.println("après");
+
+		sc.write(ByteBuffer.wrap("WESH\n".getBytes()));
+
+		System.out.println("après2");
+		sc.write(ByteBuffer.wrap("WESH\n".getBytes()));
+
+		System.out.println("après3");
+
+		/*
+		 * ByteBuffer b = ByteBuffer.allocate(256); while (sc.read(b) >= 0) {
+		 * System.out.println(new String(b.array()).trim()); b.clear(); }
+		 */
 
 	}
 }

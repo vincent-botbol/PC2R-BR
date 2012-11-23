@@ -1,59 +1,80 @@
 package br.controller.net;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.SocketChannel;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class ClientSocket extends Socket {
+public class ClientSocket {
 
-	private BufferedReader readStream;
-	private PrintWriter writeStream;
+	private SocketChannel socketChan;
 
-	/*
-	 * Je veux une implem de thread : Qui soit stoppable pendant la connexion
-	 * Qui puisse attendre la fin de la connexion Qui puisse lire en mode
-	 * bloquant
+	/**
+	 * 
+	 * @param pseudo
+	 * @param host
+	 * @param port
+	 * @throws IOException
+	 *             Normalement ça arrive pas
 	 */
-
 	public ClientSocket(String pseudo, String host, int port)
-			throws UnknownHostException, IOException {
-		super(host, port);
+			throws IOException {
+		System.out.println("avant");
+		socketChan = SocketChannel.open();
+		socketChan.configureBlocking(false);
+		socketChan.connect(new InetSocketAddress(host, port));
 
-		readStream = new BufferedReader(new InputStreamReader(getInputStream()));
-		writeStream = new PrintWriter(new BufferedWriter(
-				new OutputStreamWriter(getOutputStream())), true);
-		makeRequest(new Request(ERequest.CONNECT, Arrays.asList(pseudo)));
+		System.out.println("avant2");
+
+		socketChan.finishConnect();
+		System.out.println("après");
+		socketChan.configureBlocking(true);
+		System.out.println("après2");
 	}
 
-	// Non synchrone, peu importe d'envoyer et de recevoir au m�me moment
-	// receive response => IO = fatal close
-	public synchronized Response receiveResponse() throws IOException,
-			ParseException {
-		String str = readStream.readLine();
-		if (str == null) {
-			throw new IOException("End of reading");
-		}
-		return parseResponse(str);
+	public void makeRequest(Request r) throws IOException {
+		// charset?
+		socketChan.write(ByteBuffer.wrap(r.toString().getBytes()));
 	}
 
-	// make request => IO = fatal close
-	public void makeRequest(Request r) {
-		writeStream.println(r.toString());
+	/**
+	 * 
+	 * @return
+	 * @throws ParseException
+	 *             Quand la commande reçue est inconnue
+	 * @throws IOException
+	 *             quand il lit rien
+	 */
+	public Response receiveResponse() throws ParseException, IOException {
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ByteBuffer buff = ByteBuffer.allocate(1024);
+
+		socketChan.read(buff);
+
+		BufferedReader br = new BufferedReader(new InputStreamReader(
+				new ByteArrayInputStream(baos.toByteArray())));
+
+		return parseResponse(br.readLine().trim());
 	}
 
-	public void close() throws IOException {
-		readStream.close();
-		writeStream.close();
-		super.close();
+	/**
+	 * 
+	 * @throws AsynchronousCloseException
+	 *             close reçu pendant la connexion async de la socketchannel
+	 * @throws IOException
+	 *             le reste
+	 */
+	public void close() throws AsynchronousCloseException, IOException {
+		socketChan.close();
 	}
 
 	private static Response parseResponse(String s) throws ParseException {

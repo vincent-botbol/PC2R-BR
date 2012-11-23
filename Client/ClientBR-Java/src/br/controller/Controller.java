@@ -19,7 +19,7 @@ public class Controller {
 		this.model = mod;
 		this.view = view;
 
-		// Attente si la vue n'est pas encore prête
+		// Attente si la vue n'est pas encore prï¿½te
 		synchronized (view) {
 			try {
 				if (!view.isReady())
@@ -32,7 +32,7 @@ public class Controller {
 
 	private void addListeners() {
 		// Connexion
-		// Boutons de la fenêtre de connexion
+		// Boutons de la fenï¿½tre de connexion
 		ConnectListener cl = new ConnectListener(view, this);
 
 		view.getConnexionPane().getConnect().addActionListener(cl);
@@ -45,7 +45,7 @@ public class Controller {
 
 		// GameGrid
 		GameGridListener ggl = new GameGridListener(model, view);
-		// résoudre le problème du focus ... à voir
+		// rï¿½soudre le problï¿½me du focus ... ï¿½ voir
 		view.getGame().getGrid().addKeyListener(ggl);
 		view.getGame().getGrid().addMouseListener(ggl);
 
@@ -74,10 +74,11 @@ public class Controller {
 
 		// execute connexion + reading incoming response thread
 		dispatch = new CommandDispatcher(this, model, pseudo, host, port);
+		System.out.println("Test");
 		dispatch.execute();
 	}
 
-	// Appelé uniquement par le connectListener
+	// Appelï¿½ uniquement par le connectListener
 	public void abortConnection() {
 		closeConnection();
 		model.notifyView(UpdateArguments.CONNECTION_ABORTED);
@@ -88,7 +89,8 @@ public class Controller {
 	}
 
 	public void closeConnection() {
-		if (dispatch != null)
+		if (dispatch != null) {
 			dispatch.cancel(true);
+		}
 	}
 }

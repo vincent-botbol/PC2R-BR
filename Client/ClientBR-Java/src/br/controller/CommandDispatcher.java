@@ -33,29 +33,37 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	@Override
 	protected Void doInBackground() {
+
 		try {
+			System.out.println("On se connecte");
 			socket = new ClientSocket(pseudo, host, port);
+			System.out.println("On se connecte pas");
 		} catch (IOException e) {
 			if (!isCancelled()) {
 				model.notifyView(UpdateArguments.CONNECTION_FAILED);
 				System.out.println("failed : " + e.getMessage());
 			}
+			e.printStackTrace();
 			return null;
 		}
-
+		System.out.println("DEBUG.");
 		control.setSocket(socket);
 
 		return startReadingLoop();
 	}
 
+	public ClientSocket getSocket() {
+		return socket;
+	}
+
 	private Void startReadingLoop() {
 		try {
-			System.out.println("Connexion établie - En attente");
+			System.out.println("Connexion Ã©tablie - En attente");
 			Response r;
 			while (true) {
 				try {
 					r = socket.receiveResponse();
-					System.out.println("DEBUG : Response reçue = " + r);
+					System.out.println("DEBUG : Response reÃ§ue = " + r);
 					publish(r);
 				} catch (ParseException e) {
 					System.err.println(e.getMessage());
@@ -124,7 +132,4 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		model.gotWelcomed(arg.get(0));
 	}
 
-	public ClientSocket getSocket() {
-		return socket;
-	}
 }
