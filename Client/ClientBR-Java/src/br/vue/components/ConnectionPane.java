@@ -82,18 +82,18 @@ public class ConnectionPane extends JPanel {
 	 * @param s
 	 */
 	public void showInfo(String s) {
-		String text = "<html>" + s.replace("\n", "<br/>");
-		// Dynamic resize - trick #342
+		String text = "<html>" + s.replace("\n", "<br/>") + "</html>";
+		// first show up
 		if (info_start.getText().isEmpty()) {
 			gbc.gridx = 0;
 			gbc.gridy++;
 			gbc.anchor = GridBagConstraints.CENTER;
 			gbc.gridwidth = 2;
-
 			add(info_start, gbc);
 		}
 
 		info_start.setText(text);
+		// Dynamic resize - trick #342
 		SwingUtilities.getWindowAncestor(this).pack();
 	}
 

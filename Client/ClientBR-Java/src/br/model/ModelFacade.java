@@ -1,5 +1,6 @@
 package br.model;
 
+import java.util.List;
 import java.util.Observable;
 
 import br.common.UpdateArguments;
@@ -41,7 +42,12 @@ public class ModelFacade extends Observable {
 
 	public void gotWelcomed(String login) {
 		this.players.setMyPseudo(login);
-		notifyView(UpdateArguments.CONNECTION_SUCCESS);
+		notifyView(UpdateArguments.CONN_SUCCESS);
+	}
+
+	public void setPlayers(List<String> arguments) {
+		this.players.setAllPlayers(arguments);
+		notifyView(UpdateArguments.GAME_INIT);
 	}
 
 }

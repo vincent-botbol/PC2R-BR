@@ -22,7 +22,7 @@ public class ConnectListener implements ActionListener {
 		case "CONNECT":
 			String host = vue.getConnexionPane().getHost();
 			String pseudo = vue.getConnexionPane().getLogin();
-			control.establishConnexion(host, pseudo);
+			control.establishConnexion(pseudo, host);
 			break;
 		case "CANCEL":
 			control.abortConnection();

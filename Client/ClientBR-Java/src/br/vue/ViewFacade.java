@@ -46,7 +46,7 @@ public class ViewFacade implements Observer {
 
 		mf = new MainFrame();
 		conn = new ConnectionPane();
-		game = new GamePane();
+		game = new GamePane(model);
 
 		mf.setFrameContentPane(conn);
 		game.getGrid().requestFocusInWindow();

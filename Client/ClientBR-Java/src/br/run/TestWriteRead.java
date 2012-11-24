@@ -23,7 +23,10 @@ public class TestWriteRead {
 		sc.connect(new InetSocketAddress("localhost", 2012));
 
 		System.out.println("avant");
+
+		System.out.println("finish");
 		sc.finishConnect();
+
 		sc.configureBlocking(true);
 
 		System.out.println("après");
