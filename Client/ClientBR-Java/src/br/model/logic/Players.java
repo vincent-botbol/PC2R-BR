@@ -6,10 +6,10 @@ public class Players {
 
 	private String myPseudo;
 
-	// Ordonnés par tour de jeu
+	// Ordonnï¿½s par tour de jeu
 	private List<String> allPlayers;
 
-	public void setOtherPlayersName(List<String> allPlayers) {
+	public void setAllPlayers(List<String> allPlayers) {
 		this.allPlayers = allPlayers;
 	}
 
@@ -23,6 +23,14 @@ public class Players {
 
 	public void setMyPseudo(String myPseudo) {
 		this.myPseudo = myPseudo;
+	}
+
+	public String everyoneButMeToString() {
+		StringBuilder str = new StringBuilder();
+		for (String s : allPlayers)
+			if (!s.equals(myPseudo))
+				str.append(s + " ");
+		return str.toString().trim();
 	}
 
 }

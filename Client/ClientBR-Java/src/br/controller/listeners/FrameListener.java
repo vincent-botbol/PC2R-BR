@@ -21,8 +21,12 @@ public class FrameListener extends WindowAdapter {
 		if (JOptionPane.showConfirmDialog(null,
 				"Voulez-vous vraiment quitter?", "AWINNERISNOTYOU",
 				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
-			control.abortConnection();
-			System.exit(0);
+			try {
+				control.abortConnection();
+			} catch (Exception exc) {
+			} finally {
+				System.exit(0);
+			}
 		}
 
 	}

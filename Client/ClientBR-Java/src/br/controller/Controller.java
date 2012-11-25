@@ -1,5 +1,7 @@
 package br.controller;
 
+import java.io.IOException;
+
 import br.common.UpdateArguments;
 import br.controller.listeners.ChatListener;
 import br.controller.listeners.ConnectListener;
@@ -32,7 +34,7 @@ public class Controller {
 
 	private void addListeners() {
 		// Connexion
-		// Boutons de la fen�tre de connexion
+		// Boutons de la fenetre de connexion
 		ConnectListener cl = new ConnectListener(view, this);
 
 		view.getConnexionPane().getConnect().addActionListener(cl);
@@ -45,43 +47,27 @@ public class Controller {
 
 		// GameGrid
 		GameGridListener ggl = new GameGridListener(model, view);
-		// r�soudre le probl�me du focus ... � voir
+		// todo : focus pour le keylistener
 		view.getGame().getGrid().addKeyListener(ggl);
 		view.getGame().getGrid().addMouseListener(ggl);
 
 		view.getMf().addWindowListener(new FrameListener(this));
 	}
 
-	public synchronized ClientSocket getSocket() {
-		if (socket == null)
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				assert false : "getSocket failed";
-			}
-		return socket;
-	}
-
-	// Package visib
+	// visib package
 	void setSocket(ClientSocket socket) {
 		this.socket = socket;
 	}
 
-	private CommandDispatcher dispatch;
-
-	public void establishConnexion(String pseudo, String host, int port) {
-		model.notifyView(UpdateArguments.CONNECTION_INIT);
-
-		// execute connexion + reading incoming response thread
-		dispatch = new CommandDispatcher(this, model, pseudo, host, port);
-		System.out.println("Test");
-		dispatch.execute();
+	public void establishConnexion(final String pseudo, String host,
+			final int port) {
+		new CommandDispatcher(model, this, pseudo, host, port).execute();
 	}
 
 	// Appel� uniquement par le connectListener
 	public void abortConnection() {
 		closeConnection();
-		model.notifyView(UpdateArguments.CONNECTION_ABORTED);
+		model.notifyView(UpdateArguments.CONN_ABORTED);
 	}
 
 	public void establishConnexion(String pseudo, String host) {
@@ -89,8 +75,10 @@ public class Controller {
 	}
 
 	public void closeConnection() {
-		if (dispatch != null) {
-			dispatch.cancel(true);
+		try {
+			socket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

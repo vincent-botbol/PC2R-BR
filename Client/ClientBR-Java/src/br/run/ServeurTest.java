@@ -85,10 +85,8 @@ public class ServeurTest {
 					isStarted = true;
 				} else {
 					synchronized (this) {
-						// out.println(command.getText());
-						out.printf("%s\n", command.getText());
-						out.flush();
-						appendLine("Commande envoyée : " + command.getText());
+						out.println(command.getText());
+						appendLine("Commande envoyee : " + command.getText());
 						command.setText("");
 					}
 				}
@@ -134,7 +132,7 @@ public class ServeurTest {
 	public synchronized void startServer() {
 		try {
 			sock = new ServerSocket(2012);
-			appendLine("Serveur é l'écoute sur le port : "
+			appendLine("Serveur a l'ecoute sur le port : "
 					+ sock.getLocalPort());
 
 		} catch (IOException ex) {
@@ -145,10 +143,10 @@ public class ServeurTest {
 			appendLine("En attente d'un client");
 			try (Socket client = sock.accept()) {
 				send.setEnabled(true);
-				appendLine("Client connecté");
+				appendLine("Client connecte");
 
 				out = new PrintWriter(new BufferedWriter(
-						new OutputStreamWriter(client.getOutputStream())));
+						new OutputStreamWriter(client.getOutputStream())), true);
 				/*
 				 * why ? :'( out = new PrintWriter(new BufferedWriter( new
 				 * OutputStreamWriter(client.getOutputStream())), true);
@@ -160,7 +158,7 @@ public class ServeurTest {
 				String str;
 				synchronized (this) {
 					while ((str = in.readLine()) != null) {
-						appendLine("Commande reçue : " + str);
+						appendLine("Commande recue : " + str);
 						try {
 							Thread.sleep(1000);
 						} catch (InterruptedException e) {
@@ -170,9 +168,9 @@ public class ServeurTest {
 				}
 				out.close();
 				in.close();
-				appendLine("Client déconnecté");
+				appendLine("Client deconnecte");
 			} catch (IOException e) {
-				appendLine("Client déconnecté");
+				appendLine("Client deconnecte");
 				send.setEnabled(false);
 			}
 		}

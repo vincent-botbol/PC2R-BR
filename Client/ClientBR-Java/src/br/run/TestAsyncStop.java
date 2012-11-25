@@ -25,6 +25,7 @@ public class TestAsyncStop {
 					synchronized (this) {
 						notifyAll();
 					}
+
 					try {
 						sc.finishConnect();
 					} catch (AsynchronousCloseException e) {

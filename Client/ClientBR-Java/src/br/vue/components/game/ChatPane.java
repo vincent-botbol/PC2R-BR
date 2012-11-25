@@ -49,6 +49,7 @@ public class ChatPane extends JPanel {
 		message = new JTextField();
 
 		sendButton = new JButton("Envoyer");
+		sendButton.setEnabled(false);
 
 		addComponents();
 	}
@@ -86,12 +87,10 @@ public class ChatPane extends JPanel {
 		gbc.gridx++;
 		add(sendButton, gbc);
 	}
-	
 
 	public JButton getSendButton() {
 		return sendButton;
 	}
-
 
 	private static final long serialVersionUID = 1L;
 }

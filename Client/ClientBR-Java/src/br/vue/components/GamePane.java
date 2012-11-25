@@ -6,6 +6,7 @@ import java.awt.Insets;
 
 import javax.swing.JPanel;
 
+import br.model.ModelFacade;
 import br.vue.components.game.ChatPane;
 import br.vue.components.game.GridPane;
 import br.vue.components.game.LogPane;
@@ -16,11 +17,12 @@ public class GamePane extends JPanel {
 	private ChatPane chat;
 	private LogPane log;
 
-	public GamePane() {
+	public GamePane(ModelFacade model) {
 		super();
+
 		setLayout(new GridBagLayout());
 
-		grid = new GridPane();
+		grid = new GridPane(model);
 		log = new LogPane();
 		chat = new ChatPane(new String[] { "bla", "bli", "blou" });
 		addComponents();

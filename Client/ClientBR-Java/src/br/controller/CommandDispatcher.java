@@ -1,7 +1,11 @@
 package br.controller;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.UnresolvedAddressException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -16,16 +20,14 @@ import br.model.ModelFacade;
 class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	private ModelFacade model;
-	private Controller control;
-	private ClientSocket socket;
+	private Controller controller;
+	private String pseudo, host;
 	private int port;
-	private String host;
-	private String pseudo;
 
-	public CommandDispatcher(Controller control, ModelFacade model,
+	public CommandDispatcher(ModelFacade model, Controller controller,
 			String pseudo, String host, int port) {
-		this.control = control;
 		this.model = model;
+		this.controller = controller;
 		this.pseudo = pseudo;
 		this.host = host;
 		this.port = port;
@@ -33,32 +35,49 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	@Override
 	protected Void doInBackground() {
+		ClientSocket socket = null;
 
+		model.notifyView(UpdateArguments.RESOLV_INIT);
+
+		SocketAddress addr = new InetSocketAddress(host, port);
 		try {
-			System.out.println("On se connecte");
-			socket = new ClientSocket(pseudo, host, port);
-			System.out.println("On se connecte pas");
+			// bloquant jusqu'à résolution
+			socket = new ClientSocket(addr);
+		} catch (UnresolvedAddressException e) {
+			model.notifyView(UpdateArguments.RESOLV_FAILED);
+			return null;
 		} catch (IOException e) {
-			if (!isCancelled()) {
-				model.notifyView(UpdateArguments.CONNECTION_FAILED);
-				System.out.println("failed : " + e.getMessage());
-			}
+			System.out.println("failed créa socket");
 			e.printStackTrace();
 			return null;
 		}
-		System.out.println("DEBUG.");
-		control.setSocket(socket);
 
-		return startReadingLoop();
-	}
+		controller.setSocket(socket);
 
-	public ClientSocket getSocket() {
-		return socket;
-	}
+		model.notifyView(UpdateArguments.CONN_INIT);
+		// le bouton cancel va apparaitre
 
-	private Void startReadingLoop() {
 		try {
-			System.out.println("Connexion établie - En attente");
+			// bloquant
+			socket.connect(pseudo);
+		} catch (ConnectException e) {
+			model.notifyView(UpdateArguments.CONN_FAILED);
+			System.out.println("connect failed");
+			return null;
+		} catch (AsynchronousCloseException e) {
+			model.notifyView(UpdateArguments.CONN_ABORTED);
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return startReadingLoop(socket);
+	}
+
+	private Void startReadingLoop(ClientSocket socket) {
+		try {
+			System.out.println("DEBUG : Connexion etablie - En attente");
 			Response r;
 			while (true) {
 				try {
@@ -69,17 +88,14 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 					System.err.println(e.getMessage());
 				}
 			}
-		} catch (InterruptedIOException e) {
-			try {
-				socket.close();
-			} catch (IOException e1) {
-				System.out.println("erreur close socket");
-			}
-			System.out.println("WORKER ARRETE PAR INTERRUPT");
+		} catch (AsynchronousCloseException e) {
+			model.notifyView(UpdateArguments.CONN_ABORTED);
+			return null;
 		} catch (IOException e) {
 			System.err.println("Error : connexion lost");
-			JOptionPane.showMessageDialog(null, e.getMessage(), "I/O exc read",
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Fatal error",
 					JOptionPane.ERROR_MESSAGE);
+			System.exit(1);
 		}
 		return null;
 	}
@@ -110,6 +126,7 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		case OUCH:
 			break;
 		case PLAYERS:
+			playersProcess(r.getArguments());
 			break;
 		case SHIP:
 			break;
@@ -126,6 +143,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 			break;
 
 		}
+	}
+
+	private void playersProcess(List<String> arguments) {
+		model.setPlayers(arguments);
 	}
 
 	private void welcomeProcess(List<String> arg) {
