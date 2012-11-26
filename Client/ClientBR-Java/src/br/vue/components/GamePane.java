@@ -17,6 +17,8 @@ public class GamePane extends JPanel {
 	private ChatPane chat;
 	private LogPane log;
 
+	private GridBagConstraints gbc;
+
 	public GamePane(ModelFacade model) {
 		super();
 
@@ -24,14 +26,15 @@ public class GamePane extends JPanel {
 
 		grid = new GridPane(model);
 		log = new LogPane();
-		chat = new ChatPane(new String[] { "bla", "bli", "blou" });
+		chat = new ChatPane();
+
+		gbc = new GridBagConstraints();
+
 		addComponents();
 
 	}
 
 	private void addComponents() {
-		GridBagConstraints gbc = new GridBagConstraints();
-
 		gbc.insets = new Insets(15, 15, 15, 15);
 
 		gbc.weightx = gbc.weighty = 2;
