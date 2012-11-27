@@ -48,9 +48,10 @@ public class Controller {
 				.addActionListener(new ChatListener(model, view));
 
 		// GameGrid
-		GameGridListener ggl = new GameGridListener(model, view);
-		view.getGame().getGrid().addMouseListener(ggl);
+		view.getGame().getGrid()
+				.addMouseListener(new GameGridListener(model, view));
 
+		// Frame
 		view.getMf().addWindowListener(new FrameListener(this));
 	}
 
@@ -80,8 +81,7 @@ public class Controller {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			System.out.println("should not happen");
-			e.printStackTrace();
+			// Dans le cas où la connexion n'est pas initialisée
 		}
 	}
 }
