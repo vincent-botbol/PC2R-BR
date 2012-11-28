@@ -62,13 +62,12 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 			socket.connect(pseudo);
 		} catch (ConnectException e) {
 			model.notifyView(UpdateArguments.CONN_FAILED);
-			System.out.println("connect failed");
 			return null;
 		} catch (AsynchronousCloseException e) {
 			model.notifyView(UpdateArguments.CONN_ABORTED);
 			return null;
 		} catch (IOException e) {
-			e.printStackTrace();
+			model.notifyView(UpdateArguments.CONN_FAILED);
 			return null;
 		}
 

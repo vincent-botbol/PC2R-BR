@@ -39,6 +39,8 @@ public class Controller {
 
 		view.getConnexionPane().getConnect().addActionListener(cl);
 		view.getConnexionPane().getCancel().addActionListener(cl);
+		view.getConnexionPane().getServerComponent().addActionListener(cl);
+		view.getConnexionPane().getLoginComponent().addActionListener(cl);
 
 		// GamePane
 		// Chat
@@ -46,11 +48,10 @@ public class Controller {
 				.addActionListener(new ChatListener(model, view));
 
 		// GameGrid
-		GameGridListener ggl = new GameGridListener(model, view);
-		// todo : focus pour le keylistener
-		view.getGame().getGrid().addKeyListener(ggl);
-		view.getGame().getGrid().addMouseListener(ggl);
+		view.getGame().getGrid()
+				.addMouseListener(new GameGridListener(model, view));
 
+		// Frame
 		view.getMf().addWindowListener(new FrameListener(this));
 	}
 
@@ -64,7 +65,7 @@ public class Controller {
 		new CommandDispatcher(model, this, pseudo, host, port).execute();
 	}
 
-	// Appel� uniquement par le connectListener
+	// Appelé uniquement par le connectListener
 	public void abortConnection() {
 		closeConnection();
 		model.notifyView(UpdateArguments.CONN_ABORTED);
@@ -79,6 +80,8 @@ public class Controller {
 			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (NullPointerException e) {
+			// Dans le cas où la connexion n'est pas initialisée
 		}
 	}
 }

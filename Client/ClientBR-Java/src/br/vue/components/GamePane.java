@@ -1,5 +1,7 @@
 package br.vue.components;
 
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -17,21 +19,25 @@ public class GamePane extends JPanel {
 	private ChatPane chat;
 	private LogPane log;
 
+	private GridBagConstraints gbc;
+
 	public GamePane(ModelFacade model) {
 		super();
 
 		setLayout(new GridBagLayout());
 
+		setMinimumSize(new Dimension(300, 300));
+
 		grid = new GridPane(model);
 		log = new LogPane();
-		chat = new ChatPane(new String[] { "bla", "bli", "blou" });
-		addComponents();
+		chat = new ChatPane();
 
+		gbc = new GridBagConstraints();
+
+		addComponents();
 	}
 
 	private void addComponents() {
-		GridBagConstraints gbc = new GridBagConstraints();
-
 		gbc.insets = new Insets(15, 15, 15, 15);
 
 		gbc.weightx = gbc.weighty = 2;
@@ -40,10 +46,12 @@ public class GamePane extends JPanel {
 		gbc.fill = GridBagConstraints.BOTH;
 		add(grid, gbc);
 
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.weightx = gbc.weighty = 1;
 		gbc.gridy++;
 		add(log, gbc);
 
+		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridheight = 2;
 		gbc.gridx++;
 		gbc.gridy = 0;
@@ -62,5 +70,12 @@ public class GamePane extends JPanel {
 		return chat;
 	}
 
+	@Override
+	public void paintComponents(Graphics g) {
+
+		super.paintComponents(g);
+	}
+
 	private static final long serialVersionUID = 1L;
+
 }

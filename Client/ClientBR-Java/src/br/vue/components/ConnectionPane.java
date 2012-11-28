@@ -30,11 +30,13 @@ public class ConnectionPane extends JPanel {
 
 		setLayout(new GridBagLayout());
 
-		login = new JTextField("Test", 20);
-		login_label.setLabelFor(login);
-
 		server = new JTextField("localhost", 20);
+		server.setActionCommand("CONNECT");
 		server_label.setLabelFor(server);
+
+		login = new JTextField("Test", 20);
+		login.setActionCommand("CONNECT");
+		login_label.setLabelFor(login);
 
 		connect = new JButton("Connexion");
 		connect.setActionCommand("CONNECT");
@@ -103,6 +105,14 @@ public class ConnectionPane extends JPanel {
 
 	public JButton getCancel() {
 		return cancel;
+	}
+
+	public JTextField getServerComponent() {
+		return server;
+	}
+
+	public JTextField getLoginComponent() {
+		return server;
 	}
 
 	public String getHost() {

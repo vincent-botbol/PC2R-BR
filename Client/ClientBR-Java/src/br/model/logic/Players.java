@@ -6,7 +6,7 @@ public class Players {
 
 	private String myPseudo;
 
-	// Ordonn�s par tour de jeu
+	// Ordonnés par tour de jeu
 	private List<String> allPlayers;
 
 	public void setAllPlayers(List<String> allPlayers) {
@@ -27,10 +27,23 @@ public class Players {
 
 	public String everyoneButMeToString() {
 		StringBuilder str = new StringBuilder();
-		for (String s : allPlayers)
-			if (!s.equals(myPseudo))
-				str.append(s + " ");
-		return str.toString().trim();
-	}
 
+		// première passe pour virer son nom
+		final int truncedSize = allPlayers.size() - 1;
+		String[] names = new String[truncedSize];
+		int i = 0;
+		for (String n : allPlayers) {
+			if (!n.equals(myPseudo))
+				names[i++] = n;
+		}
+
+		str.append(names[0]);
+		if (truncedSize == 2) {
+			str.append(" et " + names[1]);
+		} else if (truncedSize == 3) {
+			str.append(", " + names[1] + " et " + names[2]);
+		}
+
+		return str.toString();
+	}
 }

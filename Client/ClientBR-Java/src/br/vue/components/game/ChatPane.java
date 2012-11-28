@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -27,17 +28,17 @@ public class ChatPane extends JPanel {
 	 * @param playersName
 	 */
 
-	public ChatPane(String[] playersName) {
+	public ChatPane() {
 		super();
 
 		setBorder(new TitledBorder("Chat"));
 
 		setPreferredSize(new Dimension(300, 300));
 
-		this.players = new JLabel[playersName.length];
+		this.players = new JLabel[4];
 
-		for (int i = 0; i < players.length; i++)
-			this.players[i] = new JLabel(playersName[i]);
+		for (int i = 0; i < 4; i++)
+			this.players[i] = new JLabel("N/A");
 
 		setLayout(new GridBagLayout());
 
@@ -90,6 +91,12 @@ public class ChatPane extends JPanel {
 
 	public JButton getSendButton() {
 		return sendButton;
+	}
+
+	public void updatePlayersLabel(List<String> names) {
+		int i = 0;
+		for (String n : names)
+			players[i++].setText(n);
 	}
 
 	private static final long serialVersionUID = 1L;
