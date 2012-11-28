@@ -20,6 +20,7 @@ public class TestGraphics {
 			vf.getMf().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			vf.getMf().pack();
 		}
+		m.getGrid().startAnimating();
 	}
 
 }

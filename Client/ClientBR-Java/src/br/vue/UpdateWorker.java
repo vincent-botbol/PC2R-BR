@@ -2,6 +2,7 @@ package br.vue;
 
 import java.awt.Color;
 
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import br.common.UpdateArguments;
@@ -35,7 +36,6 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 		if (argument != null && argument instanceof UpdateArguments) {
 			switch ((UpdateArguments) argument) {
 			case RESOLV_INIT:
-
 				conn.getConnect().setEnabled(false);
 				conn.getCancel().setEnabled(false);
 				conn.showInfo("Résolution de l'adresse");
@@ -79,6 +79,17 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 				break;
 			case GAME_INIT:
 				initGame();
+				break;
+			case REDRAW:
+				// hack
+				Runnable r = new Runnable() {
+					@Override
+					public void run() {
+						game.getGrid().revalidate();
+						game.getGrid().repaint();
+					}
+				};
+				SwingUtilities.invokeLater(r);
 				break;
 			default:
 				break;

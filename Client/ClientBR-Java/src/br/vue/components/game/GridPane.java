@@ -38,7 +38,7 @@ public class GridPane extends JPanel {
 		g2.scale(ratiox, ratioy);
 		//on scale, comme ça c'est beau
 
-		model.getGrid().drawGrid(g2);
+		model.getGrid().draw(g2);
 
 		System.out.println("test");
 
