@@ -7,8 +7,8 @@ import wx
 class View(wx.BoxSizer):
 
     def __init__(self,parent):
-        self.parent = parent
         super(View,self).__init__(wx.VERTICAL)
+        self.parent = parent
         self.occupy = 0
         self.InitUI()
         #self.Centre()
