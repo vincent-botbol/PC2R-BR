@@ -3,3 +3,4 @@
 
 import widget
 
+Widget = widget.Widget

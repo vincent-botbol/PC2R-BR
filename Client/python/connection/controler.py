@@ -5,6 +5,7 @@
 import wx
 import view
 import socket
+import re
 
 View = view.View
 
@@ -26,7 +27,8 @@ class Controler(wx.Frame):
 
     def onConnect(self,event):
         self.name = self.viou.loginEntry.GetValue()
-        
+        self.name = re.sub(r'\\',r'\\\\',self.name)
+        self.name = re.sub('/','\/',self.name)
         self.address = self.viou.serveurEntry.GetValue()
         try :
             self.address = socket.gethostbyname(self.address)

@@ -29,6 +29,7 @@ class  Main(wx.App):
             print "ah merde"
             print rep
             print self.name
+        self.sock.send("coucou")
 
     def onQuit(self,event):
         self.ExitMainLoop()
