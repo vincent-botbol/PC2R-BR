@@ -17,19 +17,13 @@ class Controler(wx.Frame):
         self.address = None
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.parent = parent
-        self.pnl=wx.Panel(self)
-        self.viou = View(self.pnl)
+        self.viou = View(self)
         #self.SetSizer(self.viou)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.onConnect,source=self.viou.buttonEnter)
         self.Bind(wx.EVT_BUTTON, self.onQuit,source=self.viou.buttonQuit)
         #self.Fit()
         #self.Centre()
-        #self.Show()
-        self.pnl.SetSizer(self.viou)
-        self.pnl.Centre()
-        self.pnl.Fit()
-        self.pnl.Show()
-        #self.Show()
+        self.Show()
 
     def onConnect(self,event):
         self.name = self.viou.loginEntry.GetValue()
