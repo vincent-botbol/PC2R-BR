@@ -6,22 +6,34 @@ import wx
 import chat
 import wx.lib.newevent
 
-class View(wx.BoxSizer):
+class View(wx.Panel):
     def __init__(self,parent):
-        super(View, self).__init__(wx.HORIZONTAL)
-        self.parent=parent
+        super(View, self).__init__(parent)
         self.buts = []
-        self.InitUI()
-
-    def InitUI(self):
+        bs=wx.BoxSizer(wx.HORIZONTAL)
         gs=wx.GridSizer(16,16,0,0)
         for i in range(16*16) :
-            pnl = wx.Panel(self.parent)
-            but = wx.Button(pnl,id=i,label=str(i))
+            but = wx.Button(self,id=i,label=str(i))
             but.Bind(wx.EVT_BUTTON,self.onBut)
             self.buts.append(but)
-            gs.Add(pnl,proportion=0,flag=wx.EXPAND)
-        self.Add(gs, proportion=1, flag=wx.EXPAND|wx.LEFT)
-    
+            gs.Add(but,proportion=1,flag=wx.EXPAND)
+        bs.Add(gs,proportion=1,flag=wx.EXPAND|wx.LEFT)
+        cs=chat.Widget(self)
+        bs.Add(cs,proportion=1,flag=wx.EXPAND|wx.RIGHT)
+        self.SetSizer(bs)
+        self.Show()
+        self.Bind(wx.EVT_KEY_DOWN,onPressKey)
+
+    # def onPressKey(self,event):
+    #     win = FindFocus()
+    #     if win.__class__ = wx.Button:
+    #         i = wing.GetId()
+    #         if i < 16*16 and i > 0 :
+    #             kc = event.GetKeyCode()
+    #             if kc = WXK_UP
+                
+        
+
+
     def onBut(self,e):
         e.Skip()
