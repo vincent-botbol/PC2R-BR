@@ -23,8 +23,10 @@ class  Main(wx.App):
         self.name = self.con.name
         self.serVaddress = self.con.address
         rep = self.sock.recv(4096)
-        if rep == "WELCOME/"+self.name+"/" :
-            print "youpi"
+        l = re.split("(?<!\\\)/",rep)
+        if l[0]=='WELCOME':
+            self.name = l[1]
+            print self.name
         else :
             print "ah merde"
             print rep

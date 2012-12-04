@@ -18,6 +18,9 @@ class Controler(wx.Frame):
         self.Centre()
         self.Show()
 
+    #def putShip(self):
+        
+
     def onBut(self,e):
         print e.GetId()
 
