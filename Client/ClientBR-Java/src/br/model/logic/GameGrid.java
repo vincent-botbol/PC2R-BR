@@ -1,9 +1,12 @@
 package br.model.logic;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import javax.swing.ImageIcon;
@@ -18,10 +21,12 @@ public class GameGrid {
 			.getImage();
 	private final static Image sea_tiles = new ImageIcon("data/sea_tiles.png")
 			.getImage();
+	private final static Color vertTransparent = new Color(0, 255, 0, 50),
+			rougeTransparent = new Color(255, 0, 0, 150);
 
 	private final static Random r = new Random();
 
-	private final static int margin = 50 - 8, cell_size = 25;
+	public final static int margin = 50 - 8, cell_size = 25;
 
 	public final static int width = 500, height = 500;
 
@@ -29,7 +34,15 @@ public class GameGrid {
 
 	private Cell[][] cell_grid;
 
-	// field submarines
+	private List<Submarine> submarines;
+	private Drone drone;
+
+	private Submarine current;
+
+	private int nbActions;
+
+	private boolean isLaserActivable;
+
 	// field drone
 
 	public GameGrid(ModelFacade modelFacade) {
@@ -42,7 +55,11 @@ public class GameGrid {
 				cell_grid[i][j].setNumTile(r.nextInt(15));
 			}
 		}
+		submarines = new ArrayList<>();
+		nbActions = 0;
+
 		animate = null;
+		isLaserActivable = false;
 	}
 
 	// Tentative d'animation -> très laid.
@@ -72,15 +89,55 @@ public class GameGrid {
 		}
 	}
 
-	public void processClick(Point p) {
-		// Notify update
+	// Renvoie la liste des actions à réaliser
+	public List<String> processClick(Point p) {
+		List<String> liste = new ArrayList<>();
+		if (!cell_grid[p.x][p.y].isReachable()) {
+			observable.notifyView(UpdateArguments.NOTREACHABLE);
+			return liste;
+		}
+		if (isLaserActivation(p)) {
+			if (!isLaserActivable) {
+				observable.notifyView(UpdateArguments.NOTRIGGERABLE);
+				return liste;
+			}
+			liste.add("E");
+			nbActions--;
+			observable.notifyView(UpdateArguments.LASER);
+			isLaserActivable = false;
+		} else {
+			Point posInitiale = drone.getLocation();
+			boolean isLeftMove = posInitiale.x > p.x;
+			boolean isUpMove = posInitiale.y > p.y;
+			// calcule les commandes de mouvement à donner pour réaliser
+			// l'action
+			for (int i = 0; i < Math.abs(posInitiale.x - p.x); i++) {
+				liste.add(isLeftMove ? "L" : "R");
+				nbActions--;
+			}
+			for (int i = 0; i < Math.abs(posInitiale.y - p.y); i++) {
+				liste.add(isUpMove ? "U" : "D");
+				nbActions--;
+			}
+		}
+
+		// Mets à jour la grille
+		// normalement, jamais négatif, vérif client
+		updateTurn(p.x, p.y, nbActions);
+
+		observable.notifyView(UpdateArguments.DOTURN);
+
+		return liste;
+	}
+
+	private boolean isLaserActivation(Point p) {
+		return p.equals(drone);
 	}
 
 	private void drawGrid(Graphics2D g2) {
 		g2.setColor(Color.white);
 		int i, j;
 		for (i = 0; i < 16; i++) {
-
 			for (j = 0; j < 16; j++) {
 				Point dest = new Point(margin + j * cell_size + j, margin + i
 						* cell_size + i), src = new Point(
@@ -90,22 +147,189 @@ public class GameGrid {
 			}
 		}
 
-		// dessiner sous-marins ici
+		if (current != null) {
+			current.drawSubmarine(g2);
+		}
 
-		// dessiner drone ici
+		// dessine les sous-marins
+		for (Submarine s : submarines) {
+			s.drawSubmarine(g2);
+		}
 
+		// dessine le drone
+		// le drone est instancié lors de l'établissement des différents joueurs
+		if (drone != null && drone.isActive()) {
+			drone.drawDrone(g2);
+		}
+
+		// Dessins des cases atteignables
+		for (i = 0; i < 16; i++) {
+			for (j = 0; j < 16; j++) {
+				Point dest = new Point(margin + j * cell_size + j, margin + i
+						* cell_size + i);
+
+				// Test si wreckage (débris)
+				if (cell_grid[i][j].hasWreckage()) {
+					// dessine croix
+					g2.setStroke(new BasicStroke(2.f));
+					g2.setColor(Color.red);
+					g2.drawLine(dest.y, dest.x, dest.y + cell_size, dest.x
+							+ cell_size);
+					g2.drawLine(dest.y, dest.x + cell_size, dest.y + cell_size,
+							dest.x);
+					g2.setStroke(new BasicStroke(1.f));
+				} else if (cell_grid[i][j].isMissed()) {
+					// dessine rond
+					g2.setStroke(new BasicStroke(2.f));
+					g2.setColor(Color.magenta);
+					g2.drawOval(dest.y + cell_size / 8, dest.x + cell_size / 8,
+							3 * cell_size / 4, 3 * cell_size / 4);
+					g2.setStroke(new BasicStroke(1.f));
+				}
+
+				if (cell_grid[i][j].isReachable()) {
+					if (drone.x == i && drone.y == j && isLaserActivable) {
+						g2.setColor(rougeTransparent);
+					} else {
+						g2.setColor(vertTransparent);
+					}
+
+					g2.fillRect(dest.y, dest.x, cell_size, cell_size);
+				}
+			}
+		}
+
+		g2.setColor(Color.white);
 		for (i = 0; i <= 16; i++) {
-			g2.drawLine(margin - 1, margin + i * cell_size + i - 1, width
-					- margin, margin + i * cell_size + i - 1);
+			if (i < 16) {
+				g2.drawString((char) ('A' + i) + "", 50 + 26 * i, 30);
+				g2.drawString((i + 1) + "", 20, 60 + 26 * i);
+			}
+			g2.drawLine(margin, margin + i * cell_size + i - 1, width - margin,
+					margin + i * cell_size + i - 1);
 			g2.drawLine(margin + i * 25 + i, margin, margin + i * 25 + i,
 					height - margin - 1);
 		}
+
 	}
 
 	public void draw(Graphics2D g2) {
-
 		g2.drawImage(background, 0, 0, null);
 		drawGrid(g2);
-
 	}
+
+	// x => index x / y => index y
+	public void placeTmpShip(int i, int j, int size, boolean vertical) {
+		if ((vertical && (i > 15 || j > 15 - (size - 1) || i < 0 || j < 0))
+				|| (!vertical && (i > 15 - (size - 1) || j > 15 || i < 0 || j < 0)))
+			return;
+		current = new Submarine(i, j, vertical, size, observable.getPlayers()
+				.getMyIndex());
+
+		observable.notifyView(UpdateArguments.REDRAW);
+	}
+
+	public void putShip() {
+		for (int i = 0; i < current.getSize(); i++) {
+			if (current.isVertical()) {
+				cell_grid[current.getY() + i][current.getX()].setOccupied(true);
+			} else {
+				cell_grid[current.getY()][current.getX() + i].setOccupied(true);
+			}
+		}
+
+		submarines.add(current);
+		current = null;
+	}
+
+	public void putPlayerShip(int x, int y, int size, boolean vertical, int num) {
+		// Pour le spectateur, plus tard.
+		submarines.add(new Submarine(x, y, vertical, size, num));
+	}
+
+	public Submarine getCurrent() {
+		return current;
+	}
+
+	// putship et check, sont décalés, faut revoir tout ça
+	public boolean isCurrentPositionValid() {
+		for (int i = 0; i < current.getSize(); i++) {
+			if (current.isVertical()) {
+				if (cell_grid[current.getY() + i][current.getX()].isOccupied())
+					return false;
+			} else {
+				if (cell_grid[current.getY()][current.getX() + i].isOccupied())
+					return false;
+			}
+		}
+		return true;
+	}
+
+	public boolean hasActionLeft() {
+		return nbActions != 0;
+	}
+
+	public void updateTurn(int x, int y, int nbAction) {
+		drone.setActive(true);
+		drone.setLocation(x, y);
+		this.nbActions = nbAction;
+		if (nbAction == 0) {
+			stopTurn();
+			return;
+		}
+
+		updateReachableCells();
+
+		observable.notifyView(UpdateArguments.REDRAW);
+	}
+
+	private void updateReachableCells() {
+		for (int i = 0; i < 16; i++) {
+			for (int j = 0; j < 16; j++) {
+				if (nbActions - Math.abs(drone.x - i) - Math.abs(drone.y - j) >= 0)
+					cell_grid[i][j].setReachable(true);
+				else
+					cell_grid[i][j].setReachable(false);
+			}
+		}
+	}
+
+	public void startTurn(int x, int y, int nbAction) {
+		updateTurn(y, x, nbAction);
+		isLaserActivable = true;
+	}
+
+	public void stopTurn() {
+		for (int i = 0; i < 16; i++) {
+			for (int j = 0; j < 16; j++) {
+				cell_grid[i][j].setReachable(false);
+			}
+		}
+		nbActions = 0;
+		observable.notifyView(UpdateArguments.ENDTURN);
+	}
+
+	public void setDrone(Drone drone) {
+		this.drone = drone;
+	}
+
+	public int getNbActionsLeft() {
+		return nbActions;
+	}
+
+	public void putOuch(int x, int y) {
+		cell_grid[y][x].setWreckage(true);
+		observable.notifyView(UpdateArguments.OUCH);
+	}
+
+	public void putMiss(int x, int y) {
+		cell_grid[y][x].setMissed(true);
+		observable.notifyView(UpdateArguments.MISS);
+	}
+
+	public void putTouche(int x, int y) {
+		cell_grid[y][x].setWreckage(true);
+		observable.notifyView(UpdateArguments.TOUCHE);
+	}
+
 }

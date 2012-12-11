@@ -2,12 +2,12 @@ package br.controller;
 
 import java.io.IOException;
 
-import br.common.UpdateArguments;
 import br.controller.listeners.ChatListener;
 import br.controller.listeners.ConnectListener;
 import br.controller.listeners.FrameListener;
 import br.controller.listeners.GameGridListener;
 import br.controller.net.ClientSocket;
+import br.controller.net.Request;
 import br.model.ModelFacade;
 import br.vue.ViewFacade;
 
@@ -16,6 +16,7 @@ public class Controller {
 	private final ModelFacade model;
 	private final ViewFacade view;
 	private ClientSocket socket;
+	private GameGridListener ggl;
 
 	public Controller(ModelFacade mod, ViewFacade view) {
 		this.model = mod;
@@ -38,18 +39,20 @@ public class Controller {
 		ConnectListener cl = new ConnectListener(view, this);
 
 		view.getConnexionPane().getConnect().addActionListener(cl);
-		view.getConnexionPane().getCancel().addActionListener(cl);
 		view.getConnexionPane().getServerComponent().addActionListener(cl);
 		view.getConnexionPane().getLoginComponent().addActionListener(cl);
 
 		// GamePane
 		// Chat
-		view.getGame().getChat().getSendButton()
-				.addActionListener(new ChatListener(model, view));
+		ChatListener chatl = new ChatListener(this, view);
+		view.getGame().getChat().getSendButton().addActionListener(chatl);
+		view.getGame().getChat().getSaisie().addActionListener(chatl);
 
 		// GameGrid
-		view.getGame().getGrid()
-				.addMouseListener(new GameGridListener(model, view));
+		ggl = new GameGridListener(model, view, this);
+
+		view.getGame().getGrid().addMouseListener(ggl);
+		view.getGame().getGrid().addMouseMotionListener(ggl);
 
 		// Frame
 		view.getMf().addWindowListener(new FrameListener(this));
@@ -62,17 +65,25 @@ public class Controller {
 
 	public void establishConnexion(final String pseudo, String host,
 			final int port) {
-		new CommandDispatcher(model, this, pseudo, host, port).execute();
+		new CommandDispatcher(model, this, view, pseudo, host, port).execute();
 	}
 
 	// Appelé uniquement par le connectListener
 	public void abortConnection() {
 		closeConnection();
-		model.notifyView(UpdateArguments.CONN_ABORTED);
 	}
 
 	public void establishConnexion(String pseudo, String host) {
 		this.establishConnexion(pseudo, host, 2012);
+	}
+
+	public void makeRequest(Request r) {
+		if (socket != null)
+			try {
+				socket.makeRequest(r);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 	}
 
 	public void closeConnection() {
@@ -83,5 +94,9 @@ public class Controller {
 		} catch (NullPointerException e) {
 			// Dans le cas où la connexion n'est pas initialisée
 		}
+	}
+
+	public GameGridListener getGameGridListener() {
+		return ggl;
 	}
 }

@@ -4,6 +4,9 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -50,7 +53,6 @@ public class ChatPane extends JPanel {
 		message = new JTextField();
 
 		sendButton = new JButton("Envoyer");
-		sendButton.setEnabled(false);
 
 		addComponents();
 	}
@@ -97,6 +99,15 @@ public class ChatPane extends JPanel {
 		int i = 0;
 		for (String n : names)
 			players[i++].setText(n);
+	}
+
+	public void ajoutMessage(String message) {
+		DateFormat df = new SimpleDateFormat("HH:mm:ss");
+		conversation.append(df.format(new Date()) + " " + message);
+	}
+
+	public JTextField getSaisie() {
+		return message;
 	}
 
 	private static final long serialVersionUID = 1L;

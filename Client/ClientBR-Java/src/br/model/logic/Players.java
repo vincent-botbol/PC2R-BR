@@ -1,5 +1,6 @@
 package br.model.logic;
 
+import java.awt.Color;
 import java.util.List;
 
 public class Players {
@@ -45,5 +46,33 @@ public class Players {
 		}
 
 		return str.toString();
+	}
+
+	public int getPlayerIndex(String s) {
+		int res = 0;
+		for (String p : allPlayers)
+			if (p.equals(s))
+				return res;
+			else
+				res++;
+		System.err.println("Player not found");
+		return 0;
+	}
+
+	public int getMyIndex() {
+		return getPlayerIndex(myPseudo);
+	}
+
+	public static Color getPlayerColor(int idx) {
+		switch (idx) {
+		case 0:
+			return Color.red;
+		case 1:
+			return Color.GRAY;
+		case 2:
+			return Color.green;
+		default:
+			return Color.yellow;
+		}
 	}
 }

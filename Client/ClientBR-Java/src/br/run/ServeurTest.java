@@ -164,6 +164,7 @@ public class ServeurTest {
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
+						out.flush();
 					}
 				}
 				out.close();

@@ -5,6 +5,7 @@ import java.util.Observable;
 
 import br.common.UpdateArguments;
 import br.model.logic.Chat;
+import br.model.logic.Drone;
 import br.model.logic.GameGrid;
 import br.model.logic.Players;
 
@@ -42,12 +43,19 @@ public class ModelFacade extends Observable {
 
 	public void gotWelcomed(String login) {
 		this.players.setMyPseudo(login);
+		getGrid().startAnimating();
 		notifyView(UpdateArguments.CONN_SUCCESS);
 	}
 
 	public void setPlayers(List<String> arguments) {
 		this.players.setAllPlayers(arguments);
+		this.grid.setDrone(new Drone(this.players.getMyIndex()));
 		notifyView(UpdateArguments.GAME_INIT);
 	}
 
+	public void resetGame() {
+		players = new Players();
+		notifyView(UpdateArguments.GAME_INIT);
+		this.grid = new GameGrid(this);
+	}
 }

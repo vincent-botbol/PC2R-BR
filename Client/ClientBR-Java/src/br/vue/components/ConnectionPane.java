@@ -18,7 +18,7 @@ public class ConnectionPane extends JPanel {
 
 	private JTextField login, server;
 
-	private JButton connect, cancel;
+	private JButton connect;
 
 	private JLabel info_start;
 
@@ -40,9 +40,6 @@ public class ConnectionPane extends JPanel {
 
 		connect = new JButton("Connexion");
 		connect.setActionCommand("CONNECT");
-		cancel = new JButton("Annuler");
-		cancel.setActionCommand("CANCEL");
-		cancel.setEnabled(false);
 
 		info_start = new JLabel();
 
@@ -74,8 +71,6 @@ public class ConnectionPane extends JPanel {
 		gbc.gridwidth = 1;
 		gbc.anchor = GridBagConstraints.LINE_END;
 		add(connect, gbc);
-		gbc.gridy++;
-		add(cancel, gbc);
 	}
 
 	/**
@@ -101,10 +96,6 @@ public class ConnectionPane extends JPanel {
 
 	public JButton getConnect() {
 		return connect;
-	}
-
-	public JButton getCancel() {
-		return cancel;
 	}
 
 	public JTextField getServerComponent() {

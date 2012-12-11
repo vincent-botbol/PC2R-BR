@@ -1,7 +1,6 @@
 package br.vue.components;
 
 import java.awt.Container;
-import java.awt.Dimension;
 
 import javax.swing.JFrame;
 
@@ -12,7 +11,7 @@ public class MainFrame extends JFrame {
 
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		setVisible(true);
-		setMinimumSize(new Dimension(400, 300));
+		// setMinimumSize(new Dimension(400, 300));
 	}
 
 	public void setFrameContentPane(Container c) {

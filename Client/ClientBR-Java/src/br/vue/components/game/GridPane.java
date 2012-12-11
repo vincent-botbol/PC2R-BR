@@ -36,12 +36,9 @@ public class GridPane extends JPanel {
 		float ratiox = this.getSize().width / (float) GameGrid.width;
 		float ratioy = this.getSize().height / (float) GameGrid.height;
 		g2.scale(ratiox, ratioy);
-		//on scale, comme ça c'est beau
+		// on scale, comme ça c'est beau
 
 		model.getGrid().draw(g2);
-
-		System.out.println("test");
-
 	}
 
 	private static final long serialVersionUID = 1L;

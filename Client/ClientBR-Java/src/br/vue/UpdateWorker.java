@@ -19,9 +19,6 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 	private GamePane game;
 	private Object argument;
 
-	private final static Object lock = new Object();
-	private static boolean hasResolved = false;
-
 	public UpdateWorker(ModelFacade model, MainFrame mf, ConnectionPane conn,
 			GamePane game, Object argument) {
 		this.model = model;
@@ -35,44 +32,20 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 	protected Void doInBackground() throws Exception {
 		if (argument != null && argument instanceof UpdateArguments) {
 			switch ((UpdateArguments) argument) {
-			case RESOLV_INIT:
-				conn.getConnect().setEnabled(false);
-				conn.getCancel().setEnabled(false);
-				conn.showInfo("Résolution de l'adresse");
-				synchronized (lock) {
-					hasResolved = true;
-					lock.notify();
-				}
-				break;
 			case RESOLV_FAILED:
 				// Viens après le resolv init
 				conn.getConnect().setEnabled(true);
-				conn.getCancel().setEnabled(false);
 				conn.showInfo("Impossible de résoudre l'adresse");
 				break;
 			case CONN_INIT:
-				// Viens après le resolv init
-				synchronized (lock) {
-					if (!hasResolved)
-						lock.wait();
-				}
-				conn.getCancel().setEnabled(true);
+				conn.getConnect().setEnabled(false);
 				conn.showInfo("Connexion en cours");
 				break;
 			case CONN_FAILED:
 				// Viens après le conn_init
 				conn.getConnect().setEnabled(true);
-				conn.getCancel().setEnabled(false);
 				conn.showInfo("Connexion impossible\n"
 						+ "Vérifiez que le serveur est actif");
-				hasResolved = false;
-				break;
-			case CONN_ABORTED:
-				// Viens après revolv_init et/ou après conn_init
-				conn.getConnect().setEnabled(true);
-				conn.getCancel().setEnabled(false);
-				conn.showInfo("Connexion annulée");
-				hasResolved = false;
 				break;
 			case CONN_SUCCESS:
 				connectionSuccess();
@@ -80,22 +53,67 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 			case GAME_INIT:
 				initGame();
 				break;
+			case LASER:
+				game.getLog().ajouterMessage("Jeu", "Activation du laser",
+						Color.MAGENTA);
+				break;
+			case DOTURN:
+				game.getLog().ajouterMessage(
+						"Jeu",
+						"Il vous reste " + model.getGrid().getNbActionsLeft()
+								+ " points d'actions", Color.blue);
+				redraw();
+				break;
+			case ENDTURN:
+				game.getLog().ajouterMessage("Jeu", "Fin du tour", Color.blue);
+				redraw();
+				break;
 			case REDRAW:
-				// hack
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						game.getGrid().revalidate();
-						game.getGrid().repaint();
-					}
-				};
-				SwingUtilities.invokeLater(r);
+				redraw();
+				break;
+			case NOTREACHABLE:
+				game.getLog().ajouterMessage("Jeu",
+						"Impossible d'atteindre cette case", Color.red);
+				break;
+			case NOTRIGGERABLE:
+				game.getLog().ajouterMessage("Jeu",
+						"Impossible de ré-activer le laser pour ce tour",
+						Color.red);
+				break;
+			case MISS:
+				game.getLog().ajouterMessage("Serveur", "Manqué!", Color.blue);
+				redraw();
+				break;
+			case OUCH:
+				game.getLog().ajouterMessage("Serveur",
+						"Vous vous êtes fait touché", Color.red);
+				redraw();
+				break;
+			case TOUCHE:
+				game.getLog().ajouterMessage("Serveur",
+						"Vous avez touché un sous-marin", Color.green);
+				redraw();
+				break;
+			case CHAT_UPDATE:
+				game.getChat().ajoutMessage(model.getChat().getMessage());
 				break;
 			default:
 				break;
 			}
 		}
 		return null;
+	}
+
+	private void redraw() {
+		// hack
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				game.getGrid().revalidate();
+				game.getGrid().repaint();
+			}
+		};
+		SwingUtilities.invokeLater(r);
 	}
 
 	private void connectionSuccess() {
@@ -113,7 +131,7 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 				"Serveur",
 				"Vous jouez contre : "
 						+ model.getPlayers().everyoneButMeToString(),
-				Color.GREEN);
+				Color.magenta);
 		game.getChat().getSendButton().setEnabled(true);
 		game.getChat().updatePlayersLabel(model.getPlayers().getAllPlayers());
 	}
