@@ -4,6 +4,7 @@
 
 import wx
 import client
+import re
 import socket
 import connection
 
@@ -26,12 +27,18 @@ class  Main(wx.App):
         l = re.split("(?<!\\\)/",rep)
         if l[0]=='WELCOME':
             self.name = l[1]
-            print self.name
-        else :
+            # print self.name
+            print "ok"
+            self.con.Destroy()
+            client.Controler(self.sock,self.name)
+        elif l[0] == 'ACCESSDENIED':
             print "ah merde"
             print rep
             print self.name
-        self.sock.send("coucou")
+        else:
+            print "ah merde"
+            print rep
+            print self.name
 
     def onQuit(self,event):
         self.ExitMainLoop()

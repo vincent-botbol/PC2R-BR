@@ -13,7 +13,7 @@ class View(wx.Panel):
         self.loginEntry = wx.TextCtrl(self,value="",
                                       style=wx.wx.TE_LEFT|wx.TE_PROCESS_ENTER)
         self.serveurEntry = wx.TextCtrl(self,value="",
-                                        style=wx.wx.TE_LEFT|wx.TE_PROCCES_ENTER)
+                                        style=wx.wx.TE_LEFT|wx.TE_PROCESS_ENTER)
         self.buttonEnter = wx.ToggleButton(self,label="Entrer",id=wx.ID_ANY)
         self.buttonQuit = wx.Button(self,label="Quitter",id=wx.ID_ANY)
         # self.parent.Bind(wx.EVT_CHAR,self.onTabLogin,source=self.loginEntry)
@@ -33,7 +33,7 @@ class View(wx.Panel):
         # self.Add(box,proportion=1)
         #self.SetSizeHints(self)
         #self.SetSizer(bbox)
-        self.logiEntry.Bind(wx.EVT_COMMAND_TEXT_ENTER,self.onEnter)
+        self.loginEntry.Bind(wx.EVT_TEXT_ENTER,self.onEnter)
         self.buttonQuit.Bind(wx.EVT_BUTTON,self.onQuit, 
                   id=self.buttonQuit.GetId())
         self.buttonEnter.Bind(wx.EVT_TOGGLEBUTTON,self.onConnect, 

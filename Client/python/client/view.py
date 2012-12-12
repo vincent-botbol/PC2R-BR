@@ -3,10 +3,9 @@
 # client/view.py
 
 import wx
-import chat
-import wx.lib.newevent
 import wx.lib.stattext
 import wx.lib.buttons
+import os
 
 #img = wx.Image("../img/sea.jpg")
 
@@ -14,8 +13,9 @@ import wx.lib.buttons
 class View(wx.Panel):
     def __init__(self,parent):
         super(View, self).__init__(parent)
-        self.seaBmp = wx.Bitmap("../img/sea.jpg",wx.BITMAP_TYPE_JPEG)
-        self.subBmp =  wx.Bitmap("../img/submarin.jpeg",wx.BITMAP_TYPE_JPEG)
+        print os.getcwd()
+        self.seaBmp = wx.Bitmap("img/sea.jpg",wx.BITMAP_TYPE_JPEG)
+        self.subBmp =  wx.Bitmap("img/submarin.jpeg",wx.BITMAP_TYPE_JPEG)
         self.buts = []
         self.count = 0
         self.pos = None
@@ -31,14 +31,17 @@ class View(wx.Panel):
             gs.Add(st,proportion=1,flag=wx.ALIGN_CENTRE)
             for j in range(16):
                 but = wx.BitmapButton(self,wx.ID_ANY,self.seaBmp
-                                                     ,name=str(i)+','+str(j),style=wx.BORDER_NONE)
-                but.SetMargins(0,0)
+                                      ,name=str(i)+'/'+str(chr(ord('A')+j))+'/'
+                                      ,style=wx.BORDER_NONE)
+                but.Bind(wx.EVT_BUTTON,parent.onBut)
+                but.SetBitmapLabel(self.seaBmp)
+                #but.SetMargins(0,0)
                 #but = wx.StaticBitmap(self,wx.ID_ANY,self.bmp)
                 #but.Bind(wx.EVT_SET_FOCUS,self.onFocus)
                 self.buts.append(but)
-                gs.Add(but,proportion=1,flag=wx.EXPAND)
+                gs.Add(but,proportion=2,flag=wx.EXPAND)
 
-        bs.Add(gs,proportion=1,flag=wx.EXPAND|wx.LEFT)
+        bs.Add(gs,proportion=2,flag=wx.EXPAND|wx.LEFT)
         
         vbox=wx.BoxSizer(wx.VERTICAL)
         vbox.AddStretchSpacer(prop=1)
@@ -67,16 +70,11 @@ class View(wx.Panel):
 
         bs.Add(vbox,proportion=1,flag=wx.EXPAND|wx.RIGHT)
         self.SetSizer(bs)
-        
-        self.putShip(0)
+
+        self.Bind(wx.EVT_TEXT_ENTER,self.onEnter)
 
         self.Show()
-        # self.Bind(wx.EVT_KEY_DOWN,onPressKey)
-
-
-    def putShip(self,n):
-        self.count = 1
-        
+        # self.Bind(wx.EVT_KEY_DOWN,onPressKey)    
             
 
     # def onPressKey(self,event):
@@ -97,6 +95,9 @@ class View(wx.Panel):
 
     # def onFocus(self,e):
     #     print e.GetWindow().GetName()
+
+    def onEnter(self,e):
+        e.Skip()
 
     def onBut(self,e):
         e.GetEventObject().SetBitmapLabel(self.subBmp)
