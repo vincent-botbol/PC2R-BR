@@ -11,7 +11,6 @@ public class Main {
 		ViewFacade vue = new ViewFacade(model);
 		@SuppressWarnings("unused")
 		Controller cont = new Controller(model, vue);
-
 	}
 
 }

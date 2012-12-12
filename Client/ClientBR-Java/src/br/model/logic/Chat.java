@@ -12,9 +12,8 @@ public class Chat {
 		this.message = "";
 	}
 
-	//Pas trop cool si c'est entre deux update mais bon. tampax
 	public void ajoutMessage(String nomJoueur, String message) {
-		message = nomJoueur + " : " + message + "\n";
+		this.message = nomJoueur + " : " + message + "\n";
 		observable.notifyView(UpdateArguments.CHAT_UPDATE);
 	}
 

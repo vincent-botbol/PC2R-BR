@@ -41,7 +41,7 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {
+	public synchronized void mouseClicked(MouseEvent e) {
 		if (isPlacing) {
 			if (e.getButton() == MouseEvent.BUTTON3) {
 				vertical = !vertical;
@@ -113,7 +113,7 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 	}
 
 	@Override
-	public void mouseMoved(MouseEvent e) {
+	public synchronized void mouseMoved(MouseEvent e) {
 		if (isPlacing) {
 			Point p = getIndexCase(e);
 			model.getGrid().placeTmpShip(p.x, p.y, sizeShip, vertical);

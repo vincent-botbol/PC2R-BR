@@ -1,9 +1,9 @@
-EXEC=serveur
+EXEC=my_serveur
 
-CC=ocamlfind ocamlc
-FLAGS=-package str -package unix -package threads -thread -linkpkg
+CC=ocamlc
+FLAGS=str.cma unix.cma threads.cma -thread
 
-SRC=serveur.ml
+SRC=my_serveur.ml
 OBJ=$(SRC:.ml=.cmo)
 
 all:$(EXEC)
