@@ -67,8 +67,6 @@ module Utils =
 
     let gen_num = let c = ref 0 in (fun () -> incr c; !c)
 
-    let gen_num2 = let c = ref 0 in (fun () -> incr c; !c)
-
     let client_from_name name  =
       try
 	List.find (fun c -> c.nom = name) !clients
@@ -113,9 +111,7 @@ module Utils =
       send_to_players msg s_descr;
       send_to_spectators msg s_descr
 
-    let nb_waiting () = List.length (List.filter (fun c -> c.phase = WAITING) !clients)
-
-    let all_waiting () = List.for_all (fun c -> c.phase = WAITING) !clients
+    let all_waiting () = not (List.for_all (fun c -> c.phase = WAITING) !clients)
 
     let print_liste chan l =
       let rec aux = function
@@ -286,8 +282,7 @@ module Connexion =
 
     let treat_connexion nom s_descr =
       if ((List.length !clients) < 4) &&
-	(not (List.exists (fun c -> c.nom = nom) !clients)) &&
-	(all_waiting ())
+	(not (List.exists (fun c -> c.nom = nom) !clients))
       then
 	begin
 	  my_output_line s_descr (Printf.sprintf "WELCOME/%s/\n" nom);
@@ -295,11 +290,11 @@ module Connexion =
 	  (* TO DO : gerer le placement du drone *)
 	  clients:={nom=nom;chan=s_descr;bateaux=[];phase=WAITING;drone=5,5}::!clients;
 	  Mutex.unlock clients_mutex;
-	  match (nb_waiting ()) with
-	    | 2 -> (*timer := Some (Thread.create timer_thread ())*)
+	  match (List.length !clients),!timer with
+	    | 2,None -> (*timer := Some (Thread.create timer_thread ())*)
 	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n";
 	      start_game ()
-	    | 4 ->
+	    | 4,Some th ->
 	      timer := None;
 	      Printf.printf "4 joueurs sont connectés, début de la partie\n";
 	      start_game()
@@ -347,8 +342,6 @@ module Connexion =
 	      end
 	    else
 	      my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
-	  else if commande_recue = "" then
-	    ()
 	  else
 	    my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
 	with
@@ -402,7 +395,7 @@ module Placement =
 	  else
 	    raise (Wrong_position "last character is maxi chelou")
 	| x::y::xs ->
-	  if (String.length y) = 1 then
+	  if (String.length x) = 1 then
 	    aux ((int_of_string x)::((int_of_char y.[0]) - 65)::tmp) xs 
 	  else raise (Wrong_position "first position is not a letter")
       in
@@ -454,10 +447,6 @@ module End_of_game =
   struct
 
     
-
-    let timer_thread () =
-      Unix.sleep 30;
-      List.iter (fun c -> if c.phase = DEAD then Stop.stop_thread_client c.chan)
     
     let new_game client =
       let cont = ref true in
@@ -475,17 +464,14 @@ module End_of_game =
 	    Printf.printf "TRACE : player %s wants to play again\n%!" client.nom;
 	    cont := false;
 	    client.phase <- WAITING;
-	    client.drone <- 5,5;
-	    client.bateaux <- [];
-	    match nb_waiting () with
-	      | 2 -> Connexion.timer := Some (Thread.create Connexion.timer_thread ())
-	      | 4 -> Connexion.timer := None; Connexion.start_game ()
-	      | _ -> ()
+	    
 	  end
       done
 	    
 	  
 
+    let client_death client = ()
+    
   end 
 
 
@@ -503,7 +489,6 @@ module Game =
 	    List.length l < 2
 	  else
 	    match l with
-	      | [] -> true
 	      | "E"::xs  -> if bool then false else aux xs true (nb - 1) (x,y)
 	      | "U"::xs -> aux xs bool (nb - 1) (x,y+1)
 	      | "D"::xs -> aux xs bool (nb - 1) (x,y-1)
@@ -548,7 +533,6 @@ module Game =
 	      switch_case_state client.bateaux Dead x y;
 	      my_output_line client.chan (Printf.sprintf "OUCH/%d/%c/\n%!" x (char_of_int (y+65)));
 	      add_cmd ["PLAYEROUCH";client.nom;(string_of_int x);(String.make 1 (char_of_int (y + 65)))] s_descr;
-	      (* client mort *)
 	      if (nb_coups client.bateaux) = 17 then
 		begin
 		  client.phase <- DEAD;
@@ -666,9 +650,14 @@ let rec main_joueur s_descr =
 	end;
 	Next.next();
 	Mutex.unlock clients_mutex
-      | _, [] ->
-	Printf.printf "TRACE.exn : maxi relou command incoming\n%!";
-	Stop.stop_thread_client s_descr
+      | DEAD, "BYE"::_ ->
+	Stop.stop_thread_client s_descr;
+	Printf.printf "TRACE : %s is leaving\n%!" client.nom
+      | DEAD, "PLAYAGAIN"::_ ->
+	client.bateaux <- [];
+	client.drone <- 5,5;
+	client.phase <- WAITING;
+	main_joueur s_descr
       | _ -> (*my_output_line s_descr "UNKNOWNCOMMAND\n%!"*)
 	Printf.printf "TRACE.exn : unknown command\n%!"
   done
