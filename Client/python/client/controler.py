@@ -3,17 +3,18 @@
 # client/controler.py
 
 import view
-import socket
 import wx
 import re
 import time
 import threading
+from mysocket import Socket
+
 
 View = view.View
 
 onButEvt = threading.Event()
-finishEvt = threading.Event()
-
+finishWaitEvt = threading.Event()
+chatEvt = threading.Event()
 
 
 myEVT_UPDATE_BAR = wx.NewEventType()
@@ -36,6 +37,28 @@ class myEvent(wx.PyCommandEvent):
     def SetValue(self,val):
         self._value = val
 
+
+class Chat(threading.Thread):
+    def __init__(self,parent,sock):
+        threading.Thread.__init__(self)
+        self.parent = parent
+        self.sock = sock
+
+    def run(self):
+        # self.sock.settimeout(1)
+        while chatEvt.is_set():
+            try :
+                l = self.sock.readline().next()
+                # l=self.sock.recv(4096)
+                listPlayers = re.split("(?<!\\\)/",l)
+                if listPlayers[0]=="HEYLISTEN":
+                    print "chat : "+str(listPlayers)
+                    e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
+                    wx.PostEvent(self.parent,e)
+            except:
+                pass
+        # self.sock.settimeout(None)
+
 class WaitPlayers(threading.Thread):
     def __init__(self,parent,sock):
         threading.Thread.__init__(self)
@@ -45,20 +68,28 @@ class WaitPlayers(threading.Thread):
     def run(self):
         e = myEvent(myEVT_UPDATE_BAR,-1,"En attente des joueurs")
         wx.PostEvent(self.parent,e)
-        l = self.sock.makefile().readline()
+        l = self.sock.readline().next()
+        #l=self.sock.recv(4096)
         #self.sock.flush()
+        print str(l)
         listPlayers = re.split("(?<!\\\)/",l)
         while listPlayers[0]!="PLAYERS":
 
             if listPlayers[0]=="HEYLISTEN":
-                # print listPlayers
+                print "waitPlayers : "+str(listPlayers)
                 e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
                 wx.PostEvent(self.parent,e)
-
-            l = self.sock.makefile().readline()
+            else:
+                print listPlayers
+            l = self.sock.readline().next()
+            # l=self.sock.recv(4096)
             listPlayers = re.split("(?<!\\\)/",l)
+        print "waitPlayers2 :" + str(listPlayers)
+        # l = self.sock.readline().next()
+        # listPlayers = re.split("(?<!\\\)/",l)
+        # print listPlayers
         value = listPlayers[1:-1]
-        print value
+        finishWaitEvt.set()
         e.SetValue("La partie va débuté")
         wx.PostEvent(self.parent,e)
         evt = myEvent(myEVT_SOCKET,-1,value)
@@ -72,27 +103,37 @@ class PutShip(threading.Thread):
         self.sock = sock
         
     def run(self):
-        rep = self.sock.makefile().readline()
+        finishWaitEvt.wait()
+        # rep = self.sock.recv(4096)
+        rep = self.sock.readline().next()
         l = re.split("(?<!\\\)/",rep)
 
         while l[0] <> 'ALLYOURBASE':
-            print l
+            print "putShip :"+str(l)
             if l[0] == 'SHIP':
                 n = int(l[1])
                 e = myEvent(myEVT_UPDATE_BAR,-1,"Placez un sous-marin de taille "+str(n))
                 wx.PostEvent(self.parent,e)
                 pos = []
                 self.parent.count=1
+
+                chatEvt.set()
+                c = Chat(self.parent,self.sock)
+                c.start()
+
                 for i in range(n):
                     onButEvt.wait()
                     onButEvt.clear()
                     pos.append(self.parent.currentBut)
                     print pos
+                
+                chatEvt.clear()
                 self.parent.count=0
                 print pos
                 self.sock.send('PUTSHIP/'+''.join(pos)+'\n')
                 print "ici"
-                rep = self.sock.makefile().readline()
+                # rep = self.sock.recv(4096)
+                rep = self.sock.readline().next()
                 l = re.split("(?<!\\\)/",rep)
                 if l[0] != 'OK':
                     print "pas content"
@@ -103,12 +144,18 @@ class PutShip(threading.Thread):
                 if l[0] == "HEYLISTEN":
                     e = myEvent(myEVT_UPDATE_CHAT,-1,l)
                     wx.PostEvent(self.parent,e)
-
-                rep = self.sock.makefile().readline()
-                l = re.split("(?<!\\\)/",rep)
-
+                    
+            if l[0] == "HEYLISTEN":
+                    e = myEvent(myEVT_UPDATE_CHAT,-1,l)
+                    wx.PostEvent(self.parent,e)
+            
+            self.sock.settimeout(None)
+            # rep = self.sock.recv(4096)
+            rep = self.sock.readline().next()
+            l = re.split("(?<!\\\)/",rep)
+                
         self.parent.pos.append(pos)
-        finishEvt.set()
+        #finishEvt.set()
         
 
 class Controler(wx.Frame):
@@ -178,7 +225,7 @@ class Controler(wx.Frame):
 
     def refreshChat(self,e):
         l = e.GetValue()
-        print l
+        print "refreshChat"+str(l)
         self.viou.chatAll.AppendText(l[1]+" : "+l[2]+"\n")
 
 if __name__ == '__main__':

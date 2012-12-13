@@ -4,7 +4,7 @@
 
 import wx
 import view
-import socket
+import mysocket
 import re
 
 View = view.View
@@ -15,7 +15,7 @@ class Controler(wx.Frame):
         super(Controler,self).__init__(None,wx.ID_ANY,"connection")
         self.name=None
         self.address = None
-        self.sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.sock = mysocket.Socket(mysocket.AF_INET,mysocket.SOCK_STREAM)
         self.parent = parent
         self.viou = View(self)
         #self.SetSizer(self.viou)
@@ -31,13 +31,13 @@ class Controler(wx.Frame):
         self.name = re.sub('/','\/',self.name)
         self.address = self.viou.serveurEntry.GetValue()
         try :
-            self.address = socket.gethostbyname(self.address)
+            self.address = mysocket.gethostbyname(self.address)
             self.sock.connect((self.address,2012))
             self.sock.send("CONNECT/"+self.name+"/\n")
             # print self.sock.recv(4096)
-        except socket.error as e:
-            print e.strerror
-            self.sock.shutdown(socket.SHUT_RDWR)
+        except:
+            # print e.strerror
+            self.sock.shutdown(mysocket.SHUT_RDWR)
             self.sock.close()
             self.viou.buttonEnter.SetValue(False)
             self.viou.buttonEnter.Enable()

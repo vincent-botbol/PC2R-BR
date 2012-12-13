@@ -67,6 +67,8 @@ module Utils =
 
     let gen_num = let c = ref 0 in (fun () -> incr c; !c)
 
+    let gen_num2 = let c = ref 0 in (fun () -> incr c; !c)
+
     let client_from_name name  =
       try
 	List.find (fun c -> c.nom = name) !clients
@@ -93,8 +95,8 @@ module Utils =
 	
     (* adresse localhost : 127.0.1.1 *)
     let get_my_addr () =
-      (*(Unix.gethostbyname "127.0.0.1").Unix.h_addr_list.(0)*)
-      (Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)
+      (Unix.gethostbyname "192.168.1.74").Unix.h_addr_list.(0)
+      (*(Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)*)
 	
 
     let send_to_players msg s_descr =
@@ -111,7 +113,9 @@ module Utils =
       send_to_players msg s_descr;
       send_to_spectators msg s_descr
 
-    let all_waiting () = not (List.for_all (fun c -> c.phase = WAITING) !clients)
+    let nb_waiting () = List.length (List.filter (fun c -> c.phase = WAITING) !clients)
+
+    let all_waiting () = List.for_all (fun c -> c.phase = WAITING) !clients
 
     let print_liste chan l =
       let rec aux = function
@@ -163,6 +167,14 @@ module Utils =
       Mutex.unlock cmd_mutex;
       send_to_spectators (Printf.sprintf "%s\n%!" msg) s_descr
 
+    let clean_map player =
+      Array.iteri (fun i -> Array.iteri (fun j _ -> map.(i).(j) <- List.filter ((<>) player) map.(i).(j))) map
+
+    let reset_client c =
+      c.phase <- WAITING;
+      c.bateaux <- [];
+      c.drone <- 5,5
+
   end
 
 open Utils
@@ -202,22 +214,9 @@ module Next =
 
 
 
-(*
-module Stop =
-  struct
-    
-    let stop_thread_client s_descr = 
-      Printf.printf "Fin d'un thread client\n%!";
-      Unix.close s_descr;
-      clients := List.filter (fun c -> c.chan <> s_descr) !clients;
-      Thread.exit ()
-	
-  end
-  *)
-
 
 module Register =
-  struct
+struct
 
     let check_connect name = 
     let chan = open_in "logins.txt" in
@@ -250,10 +249,38 @@ module Register =
   end
 
 
-module Connexion =
-  struct
 
-    let timer = ref None
+
+
+module Stop =
+  struct
+    
+    let stop_thread_client ?(timer:Thread.t option ref=ref None) s_descr = 
+      Printf.printf "Fin d'un thread client\n%!";
+      Unix.close s_descr;
+      clients := List.filter (fun c -> c.chan <> s_descr) !clients;
+      let name = try (Utils.client_from_fd s_descr).nom with Failure "searching for inexistant client" -> "" in
+      clean_map name;
+      if List.length !clients = 1 then
+	begin
+	  List.iter Utils.reset_client !clients;
+	  match !timer with
+	    |  Some _ -> timer := None
+	    | _ -> ()
+	end;
+      Thread.exit ()
+	
+  end
+
+
+
+
+
+module Connexion =
+
+struct
+  
+  let timer = ref None
 
     let start_game () =
       Mutex.lock clients_mutex;
@@ -278,23 +305,34 @@ module Connexion =
 	| _ -> Printf.printf "TRACE : Timer inutile fini\n"
 
 
+
     exception Acces_denied
 
     let treat_connexion nom s_descr =
       if ((List.length !clients) < 4) &&
-	(not (List.exists (fun c -> c.nom = nom) !clients))
+	(all_waiting ())
       then
 	begin
-	  my_output_line s_descr (Printf.sprintf "WELCOME/%s/\n" nom);
+	  let name =
+	    let rec aux nom =
+	      if List.exists (fun c -> c.nom = nom) !clients then
+		aux (nom^(string_of_int (Utils.gen_num2())))
+	      else
+		nom
+	    in
+	    aux nom
+	  in
+	  my_output_line s_descr (Printf.sprintf "WELCOME/%s/\n" name);
 	  Mutex.lock clients_mutex;
 	  (* TO DO : gerer le placement du drone *)
-	  clients:={nom=nom;chan=s_descr;bateaux=[];phase=WAITING;drone=5,5}::!clients;
+	  clients:={nom=name;chan=s_descr;bateaux=[];phase=WAITING;drone=5,5}::!clients;
 	  Mutex.unlock clients_mutex;
-	  match (List.length !clients),!timer with
-	    | 2,None -> (*timer := Some (Thread.create timer_thread ())*)
+	  match (nb_waiting ()) with
+	    | 2 -> 
+	      (*timer := Some (Thread.create timer_thread ()); *)
 	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n";
 	      start_game ()
-	    | 4,Some th ->
+	    | 4 ->
 	      timer := None;
 	      Printf.printf "4 joueurs sont connectés, début de la partie\n";
 	      start_game()
@@ -342,6 +380,8 @@ module Connexion =
 	      end
 	    else
 	      my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
+	  else if commande_recue = "" then
+	    Stop.stop_thread_client ~timer:timer s_descr
 	  else
 	    my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
 	with
@@ -354,18 +394,6 @@ module Connexion =
 
 
 
-module Stop =
-  struct
-    
-    let stop_thread_client s_descr = 
-      Printf.printf "Fin d'un thread client\n%!";
-      Unix.close s_descr;
-      clients := List.filter (fun c -> c.chan <> s_descr) !clients;
-      if (List.length !clients) = 1 then
-	Connexion.timer := None;
-      Thread.exit ()
-	
-  end
 
 
 
@@ -395,7 +423,7 @@ module Placement =
 	  else
 	    raise (Wrong_position "last character is maxi chelou")
 	| x::y::xs ->
-	  if (String.length x) = 1 then
+	  if (String.length y) = 1 then
 	    aux ((int_of_string x)::((int_of_char y.[0]) - 65)::tmp) xs 
 	  else raise (Wrong_position "first position is not a letter")
       in
@@ -447,6 +475,10 @@ module End_of_game =
   struct
 
     
+
+    let timer_thread () =
+      Unix.sleep 30;
+      List.iter (fun c -> if c.phase = DEAD then Stop.stop_thread_client c.chan)
     
     let new_game client =
       let cont = ref true in
@@ -463,15 +495,16 @@ module End_of_game =
 	  begin
 	    Printf.printf "TRACE : player %s wants to play again\n%!" client.nom;
 	    cont := false;
-	    client.phase <- WAITING;
-	    
+	    reset_client client;
+	    match nb_waiting () with
+	      | 2 -> Connexion.timer := Some (Thread.create Connexion.timer_thread ())
+	      | 4 -> Connexion.timer := None; Connexion.start_game ()
+	      | _ -> ()
 	  end
       done
 	    
 	  
 
-    let client_death client = ()
-    
   end 
 
 
@@ -489,6 +522,7 @@ module Game =
 	    List.length l < 2
 	  else
 	    match l with
+	      | [] -> true
 	      | "E"::xs  -> if bool then false else aux xs true (nb - 1) (x,y)
 	      | "U"::xs -> aux xs bool (nb - 1) (x,y+1)
 	      | "D"::xs -> aux xs bool (nb - 1) (x,y-1)
@@ -533,6 +567,7 @@ module Game =
 	      switch_case_state client.bateaux Dead x y;
 	      my_output_line client.chan (Printf.sprintf "OUCH/%d/%c/\n%!" x (char_of_int (y+65)));
 	      add_cmd ["PLAYEROUCH";client.nom;(string_of_int x);(String.make 1 (char_of_int (y + 65)))] s_descr;
+	      (* client mort *)
 	      if (nb_coups client.bateaux) = 17 then
 		begin
 		  client.phase <- DEAD;
@@ -650,14 +685,9 @@ let rec main_joueur s_descr =
 	end;
 	Next.next();
 	Mutex.unlock clients_mutex
-      | DEAD, "BYE"::_ ->
-	Stop.stop_thread_client s_descr;
-	Printf.printf "TRACE : %s is leaving\n%!" client.nom
-      | DEAD, "PLAYAGAIN"::_ ->
-	client.bateaux <- [];
-	client.drone <- 5,5;
-	client.phase <- WAITING;
-	main_joueur s_descr
+      | _, [] ->
+	Printf.printf "TRACE.exn : maxi relou command incoming\n%!";
+	Stop.stop_thread_client ~timer:Connexion.timer s_descr
       | _ -> (*my_output_line s_descr "UNKNOWNCOMMAND\n%!"*)
 	Printf.printf "TRACE.exn : unknown command\n%!"
   done

@@ -5,7 +5,7 @@
 import wx
 import client
 import re
-import socket
+from mysocket import Socket
 import connection
 
 class  Main(wx.App):
@@ -25,6 +25,7 @@ class  Main(wx.App):
         self.serVaddress = self.con.address
         rep = self.sock.recv(4096)
         l = re.split("(?<!\\\)/",rep)
+        print "main : "+str(l)
         if l[0]=='WELCOME':
             self.name = l[1]
             # print self.name
