@@ -30,7 +30,7 @@ public class ConnectionPane extends JPanel {
 
 		setLayout(new GridBagLayout());
 
-		server = new JTextField("localhost", 20);
+		server = new JTextField("192.168.0.17", 20);
 		server.setActionCommand("CONNECT");
 		server_label.setLabelFor(server);
 

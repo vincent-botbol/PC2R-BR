@@ -168,8 +168,7 @@ public class GameGrid {
 				Point dest = new Point(margin + j * cell_size + j, margin + i
 						* cell_size + i);
 
-				// Test si wreckage (débris)
-				if (cell_grid[i][j].hasWreckage()) {
+				if (cell_grid[i][j].isOuch()) {
 					// dessine croix
 					g2.setStroke(new BasicStroke(2.f));
 					g2.setColor(Color.red);
@@ -178,7 +177,18 @@ public class GameGrid {
 					g2.drawLine(dest.y, dest.x + cell_size, dest.y + cell_size,
 							dest.x);
 					g2.setStroke(new BasicStroke(1.f));
-				} else if (cell_grid[i][j].isMissed()) {
+				}
+				if (cell_grid[i][j].isTouche()) {
+					// dessine +
+					g2.setStroke(new BasicStroke(2.f));
+					g2.setColor(Color.green);
+					g2.drawLine(dest.y + cell_size / 2, dest.x, dest.y
+							+ cell_size / 2, dest.x + cell_size);
+					g2.drawLine(dest.y, dest.x + cell_size / 2, dest.y
+							+ cell_size, dest.x + cell_size / 2);
+					g2.setStroke(new BasicStroke(1.f));
+				}
+				if (cell_grid[i][j].isMissed()) {
 					// dessine rond
 					g2.setStroke(new BasicStroke(2.f));
 					g2.setColor(Color.magenta);
@@ -190,6 +200,8 @@ public class GameGrid {
 				if (cell_grid[i][j].isReachable()) {
 					if (drone.x == i && drone.y == j && isLaserActivable) {
 						g2.setColor(rougeTransparent);
+					} else if (drone.x == i && drone.y == j) {
+						continue;
 					} else {
 						g2.setColor(vertTransparent);
 					}
@@ -202,8 +214,8 @@ public class GameGrid {
 		g2.setColor(Color.white);
 		for (i = 0; i <= 16; i++) {
 			if (i < 16) {
-				g2.drawString((char) ('A' + i) + "", 50 + 26 * i, 30);
-				g2.drawString((i + 1) + "", 20, 60 + 26 * i);
+				g2.drawString((i + 1) + "", 50 + 26 * i, 500 - 20);
+				g2.drawString((char) ('A' - i + 15) + "", 20, 60 + 26 * i);
 			}
 			g2.drawLine(margin, margin + i * cell_size + i - 1, width - margin,
 					margin + i * cell_size + i - 1);
@@ -218,8 +230,10 @@ public class GameGrid {
 		drawGrid(g2);
 	}
 
-	// x => index x / y => index y
+	// coordonnées graphique en entrée
+	// on place sur la grille dans les mêmes
 	public void placeTmpShip(int i, int j, int size, boolean vertical) {
+
 		if ((vertical && (i > 15 || j > 15 - (size - 1) || i < 0 || j < 0))
 				|| (!vertical && (i > 15 - (size - 1) || j > 15 || i < 0 || j < 0)))
 			return;
@@ -233,8 +247,14 @@ public class GameGrid {
 		for (int i = 0; i < current.getSize(); i++) {
 			if (current.isVertical()) {
 				cell_grid[current.getY() + i][current.getX()].setOccupied(true);
+				System.out.println("Debug : "
+						+ (char) ('A' + 15 - (current.getY() + i)) + " ; "
+						+ current.getX());
 			} else {
 				cell_grid[current.getY()][current.getX() + i].setOccupied(true);
+				System.out.println("Debug : "
+						+ (char) ('A' + 15 - current.getY()) + " ; "
+						+ (current.getX() + i));
 			}
 		}
 
@@ -251,7 +271,6 @@ public class GameGrid {
 		return current;
 	}
 
-	// putship et check, sont décalés, faut revoir tout ça
 	public boolean isCurrentPositionValid() {
 		for (int i = 0; i < current.getSize(); i++) {
 			if (current.isVertical()) {
@@ -273,7 +292,7 @@ public class GameGrid {
 		drone.setActive(true);
 		drone.setLocation(x, y);
 		this.nbActions = nbAction;
-		if (nbAction == 0) {
+		if (nbAction <= 0) {
 			stopTurn();
 			return;
 		}
@@ -295,8 +314,8 @@ public class GameGrid {
 	}
 
 	public void startTurn(int x, int y, int nbAction) {
-		updateTurn(y, x, nbAction);
 		isLaserActivable = true;
+		updateTurn(x, y, nbAction);
 	}
 
 	public void stopTurn() {
@@ -318,17 +337,17 @@ public class GameGrid {
 	}
 
 	public void putOuch(int x, int y) {
-		cell_grid[y][x].setWreckage(true);
+		cell_grid[x][y].setOuch(true);
 		observable.notifyView(UpdateArguments.OUCH);
 	}
 
 	public void putMiss(int x, int y) {
-		cell_grid[y][x].setMissed(true);
+		cell_grid[x][y].setMissed(true);
 		observable.notifyView(UpdateArguments.MISS);
 	}
 
 	public void putTouche(int x, int y) {
-		cell_grid[y][x].setWreckage(true);
+		cell_grid[x][y].setTouche(true);
 		observable.notifyView(UpdateArguments.TOUCHE);
 	}
 

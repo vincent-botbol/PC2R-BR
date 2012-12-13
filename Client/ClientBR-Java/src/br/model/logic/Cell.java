@@ -2,21 +2,24 @@ package br.model.logic;
 
 public class Cell {
 
-	private boolean hasWreckage;
+	private boolean isTouche;
+	private boolean isMissed;
+	private boolean isOuch;
 	private int numTile;
 	private boolean isOccupied;
 	private boolean isReachable;
-	private boolean isMissed;
 
 	public Cell() {
 		this.isOccupied = false;
-		this.hasWreckage = false;
+		this.isTouche = false;
+		this.isMissed = false;
+		this.isOuch = false;
 		this.isReachable = false;
 		numTile = 0;
 	}
 
-	public boolean hasWreckage() {
-		return hasWreckage;
+	public boolean isTouche() {
+		return isTouche;
 	}
 
 	public void setOccupied(boolean isOccupied) {
@@ -27,8 +30,8 @@ public class Cell {
 		return isOccupied;
 	}
 
-	public void setWreckage(boolean hasWreckage) {
-		this.hasWreckage = hasWreckage;
+	public void setTouche(boolean isTouche) {
+		this.isTouche = isTouche;
 	}
 
 	public void setNumTile(int numTile) {
@@ -55,4 +58,11 @@ public class Cell {
 		this.isMissed = b;
 	}
 
+	public boolean isOuch() {
+		return isOuch;
+	}
+
+	public void setOuch(boolean isOuch) {
+		this.isOuch = isOuch;
+	}
 }

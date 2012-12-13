@@ -101,15 +101,16 @@ public class Submarine {
 		}
 	}
 
+	// index inversés sur l'ordonnée
 	public List<String> getIndexes() {
 		List<String> args = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
 			if (isVertical) {
-				args.add((this.y + i) + "");
-				args.add((char) (this.x + 'A') + "");
+				args.add(this.x + "");
+				args.add((char) ('P' - this.y - i) + "");
 			} else {
-				args.add((this.y) + "");
-				args.add((char) (this.x + 'A' + i) + "");
+				args.add((this.x + i) + "");
+				args.add((char) ('P' - this.y) + "");
 			}
 		}
 
