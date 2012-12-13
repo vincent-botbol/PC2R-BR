@@ -87,32 +87,6 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 	}
 
 	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {
-	}
-
-	public void setPlacing(boolean isPlacing) {
-		this.isPlacing = isPlacing;
-	}
-
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public synchronized void mouseMoved(MouseEvent e) {
 		if (isPlacing) {
 			Point p = getIndexCase(e);
@@ -122,6 +96,10 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 		}
 	}
 
+	/**
+	 * @return retourne la position graphique => p.x = abscisse [0;15] et
+	 *         ordonnées [0;15] (0 = point en haut à gauche)
+	 */
 	private Point getIndexCase(MouseEvent e) {
 		int width_game = view.getGame().getGrid().getWidth(), height_game = view
 				.getGame().getGrid().getHeight();
@@ -142,6 +120,7 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 		else if ((int) indexY > 15)
 			indexY = 15;
 
+		System.out.println("Index click souris : " + indexX + " ; " + indexY);
 		return new Point((int) indexX, (int) indexY);
 	}
 
@@ -152,4 +131,29 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 	public void setPlaying(boolean isPlaying) {
 		this.isPlaying = isPlaying;
 	}
+
+	public void setPlacing(boolean isPlacing) {
+		this.isPlacing = isPlacing;
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
+	}
+
 }

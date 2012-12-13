@@ -238,8 +238,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		}
 	}
 
+	// Transforme coordonnées jeu en coordonnées graphiques
+	// 'A' -> 15 // 'P' -> 0
 	public static Point toIndexes(String x, String y) {
-		return new Point(Integer.parseInt(x), y.charAt(0) - 'A');
+		return new Point(Integer.parseInt(x), 'P' - y.charAt(0));
 	}
 
 }
