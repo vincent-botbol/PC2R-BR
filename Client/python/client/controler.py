@@ -46,12 +46,14 @@ class WaitPlayers(threading.Thread):
         e = myEvent(myEVT_UPDATE_BAR,-1,"En attente des joueurs")
         wx.PostEvent(self.parent,e)
         l = self.sock.makefile().readline()
+        #self.sock.flush()
         listPlayers = re.split("(?<!\\\)/",l)
         while listPlayers[0]!="PLAYERS":
 
             if listPlayers[0]=="HEYLISTEN":
-                 e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
-                 wx.PostEvent(self.parent,e)
+                # print listPlayers
+                e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
+                wx.PostEvent(self.parent,e)
 
             l = self.sock.makefile().readline()
             listPlayers = re.split("(?<!\\\)/",l)
@@ -74,35 +76,36 @@ class PutShip(threading.Thread):
         l = re.split("(?<!\\\)/",rep)
 
         while l[0] <> 'ALLYOURBASE':
-             if l[0] == 'SHIP':
-                 n = int(l[1])
-                 e = myEvent(myEVT_UPDATE_BAR,-1,"Placez un sous-marin de taille "+str(n))
-                 wx.PostEvent(self.parent,e)
-                 pos = []
-                 self.parent.count=1
-                 for i in range(n):
-                     onButEvt.wait()
-                     onButEvt.clear()
-                     pos.append(self.parent.currentBut)
-                     print pos
-                 self.parent.count=0
-                 print pos
-                 self.sock.send('PUTSHIP/'+''.join(pos)+'\n')
-                 print "ici"
-                 rep = self.sock.makefile().readline()
-                 l = re.split("(?<!\\\)/",rep)
-                 if l[0] != 'OK':
-                     print "pas content"
-                     # self.parent.resetBmp(pos)
-                     e = myEvent(myEVT_UPDATE_BAR,-1,"Mauvais Placement. Placez un sous-marin de taille "+str(n))
-                     wx.PostEvent(self.parent,e)
-                     continue
-             if l[0] == "HEYLISTEN":
-                 e = myEvent(myEVT_UPDATE_CHAT,-1,l)
-                 wx.PostEvent(self.parent,e)
+            print l
+            if l[0] == 'SHIP':
+                n = int(l[1])
+                e = myEvent(myEVT_UPDATE_BAR,-1,"Placez un sous-marin de taille "+str(n))
+                wx.PostEvent(self.parent,e)
+                pos = []
+                self.parent.count=1
+                for i in range(n):
+                    onButEvt.wait()
+                    onButEvt.clear()
+                    pos.append(self.parent.currentBut)
+                    print pos
+                self.parent.count=0
+                print pos
+                self.sock.send('PUTSHIP/'+''.join(pos)+'\n')
+                print "ici"
+                rep = self.sock.makefile().readline()
+                l = re.split("(?<!\\\)/",rep)
+                if l[0] != 'OK':
+                    print "pas content"
+                    # self.parent.resetBmp(pos)
+                    e = myEvent(myEVT_UPDATE_BAR,-1,"Mauvais Placement. Placez un sous-marin de taille "+str(n))
+                    wx.PostEvent(self.parent,e)
+                    continue
+                if l[0] == "HEYLISTEN":
+                    e = myEvent(myEVT_UPDATE_CHAT,-1,l)
+                    wx.PostEvent(self.parent,e)
 
-             rep = self.sock.makefile().readline()
-             l = re.split("(?<!\\\)/",rep)
+                rep = self.sock.makefile().readline()
+                l = re.split("(?<!\\\)/",rep)
 
         self.parent.pos.append(pos)
         finishEvt.set()
@@ -134,6 +137,7 @@ class Controler(wx.Frame):
         self.Bind(EVT_SOCKET,self.waitPlayers)
         
         self.Bind(wx.EVT_TEXT_ENTER,self.onEnter,source=self.viou.chatEntry)
+        self.Bind(wx.EVT_BUTTON,self.refreshChat,source=self.viou.sendButton)
         self.Bind(EVT_UPDATE_CHAT,self.refreshChat)
 
         finishEvt.clear()
@@ -160,6 +164,7 @@ class Controler(wx.Frame):
             self.b.SetBitmapLabel(self.viou.subBmp)
             self.currentBut = e.GetEventObject().GetName()
             onButEvt.set()
+            
 
     def resetBmp(self,pos):
         for name in pos:
