@@ -247,14 +247,16 @@ public class GameGrid {
 		for (int i = 0; i < current.getSize(); i++) {
 			if (current.isVertical()) {
 				cell_grid[current.getY() + i][current.getX()].setOccupied(true);
-				System.out.println("Debug : "
-						+ (char) ('A' + 15 - (current.getY() + i)) + " ; "
-						+ current.getX());
+				/*
+				 * System.out.println("Debug : " + (char) ('A' + 15 -
+				 * (current.getY() + i)) + " ; " + current.getX());
+				 */
 			} else {
 				cell_grid[current.getY()][current.getX() + i].setOccupied(true);
-				System.out.println("Debug : "
-						+ (char) ('A' + 15 - current.getY()) + " ; "
-						+ (current.getX() + i));
+				/*
+				 * System.out.println("Debug : " + (char) ('A' + 15 -
+				 * current.getY()) + " ; " + (current.getX() + i));
+				 */
 			}
 		}
 

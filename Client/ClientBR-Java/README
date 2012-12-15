@@ -1,0 +1,3 @@
+Pour tester :
+
+ant build && ant Main

@@ -1,0 +1,3 @@
+Pour compiler et lancer le serveur :
+
+make && ./my_serveur [adresse]

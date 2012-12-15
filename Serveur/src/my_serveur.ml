@@ -91,22 +91,29 @@ module Utils =
       !r
 	
     let my_output_line fd str =
+      Printf.printf "TRACE : command send : %s\n%!" str;
       ignore (ThreadUnix.write fd str 0 (String.length str))
 	
-    (* adresse localhost : 127.0.1.1 *)
+    (* adresse localhost : 1270.1.1 *)
     let get_my_addr () =
+<<<<<<< HEAD
       (Unix.gethostbyname "192.168.1.74").Unix.h_addr_list.(0)
+=======
+      try
+	(Unix.gethostbyname Sys.argv.(1)).Unix.h_addr_list.(0)
+      with
+	| Invalid_argument "index out of bounds" ->
+	    (Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)
+>>>>>>> update java
       (*(Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)*)
 	
 
     let send_to_players msg s_descr =
-      List.iter (fun c -> if c.chan != s_descr then my_output_line c.chan msg) !clients
+      List.iter (fun c -> my_output_line c.chan msg) !clients
 
     let send_to_spectators msg s_descr =
       List.iter
-	(fun spec_chan ->
-	  if spec_chan != s_descr then my_output_line spec_chan msg
-	)
+	(fun spec_chan -> my_output_line spec_chan msg)
 	!spectators
 
     let send_to_all msg s_descr =
@@ -217,8 +224,13 @@ module Next =
 
 module Register =
 struct
+<<<<<<< HEAD
+=======
 
-    let check_connect name = 
+  let () = if not (Sys.file_exists "logins.txt") then ignore (open_out "logins.txt")
+>>>>>>> update java
+
+  let check_connect name = 
     let chan = open_in "logins.txt" in
       try
 	let cont = ref true in
@@ -329,9 +341,15 @@ struct
 	  Mutex.unlock clients_mutex;
 	  match (nb_waiting ()) with
 	    | 2 -> 
+<<<<<<< HEAD
 	      (*timer := Some (Thread.create timer_thread ()); *)
 	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n";
 	      start_game ()
+=======
+	      timer := Some (Thread.create timer_thread ());
+	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n"
+	      (*start_game ()*)
+>>>>>>> update java
 	    | 4 ->
 	      timer := None;
 	      Printf.printf "4 joueurs sont connectés, début de la partie\n";
@@ -767,12 +785,13 @@ object (self)
   val port = p 
   val mutable sock = ThreadUnix.socket Unix.PF_INET Unix.SOCK_STREAM 0
     
-  initializer 
-  let mon_adresse = get_my_addr () in
-  Printf.printf "Adresse du serveur : %s\n%!" (Unix.string_of_inet_addr mon_adresse);
-  Unix.bind sock (Unix.ADDR_INET(mon_adresse,port)) ;
-  Unix.listen sock 3
-    
+  initializer
+    Unix.setsockopt sock Unix.SO_REUSEADDR true;
+    let mon_adresse = get_my_addr () in
+      Printf.printf "Adresse du serveur : %s\n%!" (Unix.string_of_inet_addr mon_adresse);
+      Unix.bind sock (Unix.ADDR_INET(mon_adresse,port)) ;
+      Unix.listen sock 3
+	
   method private client_addr = function 
   Unix.ADDR_INET(host,_) -> Unix.string_of_inet_addr host
     | _ -> "Unexpected client"

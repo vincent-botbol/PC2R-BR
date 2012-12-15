@@ -57,4 +57,6 @@ public class Drone extends Point {
 		g2.fillOval((int) (x + this.x), (int) (y + this.y),
 				(int) (halfcell / 2), (int) (halfcell / 2));
 	}
+	
+	private static final long serialVersionUID = 1L;
 }

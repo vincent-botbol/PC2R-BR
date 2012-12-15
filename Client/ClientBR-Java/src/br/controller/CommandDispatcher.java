@@ -26,7 +26,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	private ModelFacade model;
 	private Controller controller;
 	private ViewFacade view;
-	private String pseudo, host;
+	private String pseudo, host, pass;
+	private boolean isRegister;
+	private boolean isCleanDisconnect;
+	private boolean isSpectator;
 
 	public CommandDispatcher(ModelFacade model, Controller controller,
 			ViewFacade view, String pseudo, String host, int port) {
@@ -55,6 +58,7 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 			socket = new ClientSocket(addr, pseudo);
 		} catch (IOException e1) {
 			model.notifyView(UpdateArguments.CONN_FAILED);
+			return null;
 		}
 
 		controller.setSocket(socket);
@@ -64,12 +68,12 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	private Void startReadingLoop(ClientSocket socket) {
 		try {
-			System.out.println("DEBUG : Connexion etablie - En attente");
+			// System.out.println("DEBUG : Connexion etablie - En attente");
 			Response r;
 			while (true) {
 				try {
 					r = socket.receiveResponse();
-					System.out.println("DEBUG : Response reçue = " + r);
+					// System.out.println("DEBUG : Response reçue = " + r);
 					publish(r);
 				} catch (ParseException e) {
 					System.err.println(e.getMessage());

@@ -48,7 +48,7 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 				mouseMoved(e);
 			} else if (e.getButton() == MouseEvent.BUTTON1) {
 				if (model.getGrid().isCurrentPositionValid()) {
-					System.out.println("Position valide");
+					//System.out.println("Position valide");
 					this.isPlacing = false;
 					List<String> args = model.getGrid().getCurrent()
 							.getIndexes();
@@ -120,7 +120,6 @@ public class GameGridListener implements MouseListener, MouseMotionListener {
 		else if ((int) indexY > 15)
 			indexY = 15;
 
-		System.out.println("Index click souris : " + indexX + " ; " + indexY);
 		return new Point((int) indexX, (int) indexY);
 	}
 
