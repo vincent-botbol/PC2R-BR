@@ -12,7 +12,6 @@ import br.model.logic.Players;
 public class ModelFacade extends Observable {
 
 	private GameGrid grid;
-	// on verra plus tard pour les players
 	private Players players;
 	private Chat chat;
 

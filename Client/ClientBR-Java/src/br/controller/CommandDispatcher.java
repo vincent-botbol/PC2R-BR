@@ -109,22 +109,14 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	private Void startReadingLoop(ClientSocket socket) {
 		try {
-<<<<<<< HEAD
-			// System.out.println("DEBUG : Connexion etablie - En attente");
-=======
 			if (Main.DEBUG)
 				System.out.println("DEBUG : Connexion etablie - En attente");
->>>>>>> Ajout spectateur Java
 			Response r;
 			while (true) {
 				try {
 					r = socket.receiveResponse();
-<<<<<<< HEAD
-					// System.out.println("DEBUG : Response reçue = " + r);
-=======
 					if (Main.DEBUG)
 						System.out.println("DEBUG : Response reçue = " + r);
->>>>>>> Ajout spectateur Java
 					publish(r);
 				} catch (ParseException e) {
 					System.err.println(e.getMessage());
