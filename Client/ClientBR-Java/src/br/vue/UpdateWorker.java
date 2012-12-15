@@ -35,23 +35,40 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 			case RESOLV_FAILED:
 				// Viens après le resolv init
 				conn.getConnect().setEnabled(true);
+				conn.getRegister()
+						.setEnabled(conn.getCheck_pass().isSelected());
 				conn.showInfo("Impossible de résoudre l'adresse");
 				break;
 			case CONN_INIT:
 				conn.getConnect().setEnabled(false);
+				conn.getRegister().setEnabled(false);
 				conn.showInfo("Connexion en cours");
 				break;
 			case CONN_FAILED:
-				// Viens après le conn_init
 				conn.getConnect().setEnabled(true);
+				conn.getRegister()
+						.setEnabled(conn.getCheck_pass().isSelected());
 				conn.showInfo("Connexion impossible\n"
 						+ "Vérifiez que le serveur est actif");
 				break;
 			case CONN_SUCCESS:
 				connectionSuccess();
 				break;
+			case LOGIN_FAILED:
+				conn.getConnect().setEnabled(true);
+				conn.getRegister().setEnabled(true);
+				conn.showInfo("Mot de passe incorrect");
+				break;
+			case REGISTER_FAILED:
+				conn.getConnect().setEnabled(true);
+				conn.getRegister().setEnabled(true);
+				conn.showInfo("Impossible de s'enregistrer\nCe pseudo est déjà pris");
+				break;
 			case GAME_INIT:
-				initGame();
+				initGame(false);
+				break;
+			case GAME_INIT_SPECT:
+				initGame(true);
 				break;
 			case LASER:
 				game.getLog().ajouterMessage("Jeu", "Activation du laser",
@@ -125,14 +142,20 @@ public class UpdateWorker extends SwingWorker<Void, Void> {
 				"En attente du début de la partie...", Color.BLUE);
 	}
 
-	private void initGame() {
+	private void initGame(boolean isSpectator) {
 		game.getLog().ajouterMessage("Jeu", "Début de partie", Color.BLUE);
-		game.getLog().ajouterMessage(
-				"Serveur",
-				"Vous jouez contre : "
-						+ model.getPlayers().everyoneButMeToString(),
-				Color.magenta);
-		game.getChat().getSendButton().setEnabled(true);
+		if (isSpectator)
+			game.getLog().ajouterMessage(
+					"Serveur",
+					"Les joueurs sont : "
+							+ model.getPlayers().allPlayersToString(),
+					Color.magenta);
+		else
+			game.getLog().ajouterMessage(
+					"Serveur",
+					"Vous jouez contre : "
+							+ model.getPlayers().everyoneButMeToString(),
+					Color.magenta);
 		game.getChat().updatePlayersLabel(model.getPlayers().getAllPlayers());
 	}
 }

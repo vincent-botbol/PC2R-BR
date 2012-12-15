@@ -8,6 +8,7 @@ public class Cell {
 	private int numTile;
 	private boolean isOccupied;
 	private boolean isReachable;
+	private int playerOuch;
 
 	public Cell() {
 		this.isOccupied = false;
@@ -15,7 +16,8 @@ public class Cell {
 		this.isMissed = false;
 		this.isOuch = false;
 		this.isReachable = false;
-		numTile = 0;
+		this.numTile = 0;
+		this.playerOuch = -1;
 	}
 
 	public boolean isTouche() {
@@ -64,5 +66,13 @@ public class Cell {
 
 	public void setOuch(boolean isOuch) {
 		this.isOuch = isOuch;
+	}
+
+	public void setPlayerOuch(int num) {
+		this.playerOuch = num;
+	}
+
+	public int getPlayerOuch() {
+		return playerOuch;
 	}
 }

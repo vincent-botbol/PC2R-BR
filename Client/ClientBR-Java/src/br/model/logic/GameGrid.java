@@ -43,6 +43,10 @@ public class GameGrid {
 
 	private boolean isLaserActivable;
 
+	private boolean isSpectatorMode;
+
+	private Drone[] all_drones;
+
 	// field drone
 
 	public GameGrid(ModelFacade modelFacade) {
@@ -60,6 +64,7 @@ public class GameGrid {
 
 		animate = null;
 		isLaserActivable = false;
+		this.isSpectatorMode = false;
 	}
 
 	// Tentative d'animation -> très laid.
@@ -156,17 +161,51 @@ public class GameGrid {
 			s.drawSubmarine(g2);
 		}
 
-		// dessine le drone
-		// le drone est instancié lors de l'établissement des différents joueurs
-		if (drone != null && drone.isActive()) {
+		// dessine le(s) drone(s)
+		// le(s) drone(s) est instancié lors de l'établissement des différents
+		// joueurs
+		if (isSpectatorMode() && all_drones != null) {
+			for (Drone d : all_drones)
+				d.drawDrone(g2);
+		} else if (drone != null && drone.isActive()) {
 			drone.drawDrone(g2);
 		}
 
-		// Dessins des cases atteignables
+		// Dessins des cases
 		for (i = 0; i < 16; i++) {
 			for (j = 0; j < 16; j++) {
 				Point dest = new Point(margin + j * cell_size + j, margin + i
 						* cell_size + i);
+
+				if (isSpectatorMode) {
+					switch (cell_grid[i][j].getPlayerOuch()) {
+					case -1:
+						continue;
+					case 0:
+						g2.setColor(Color.red);
+						break;
+					case 1:
+						g2.setColor(Color.gray);
+						break;
+					case 2:
+						g2.setColor(Color.green);
+						break;
+					case 3:
+						g2.setColor(Color.yellow);
+						break;
+					default:
+						break;
+					}
+
+					g2.setStroke(new BasicStroke(2.f));
+					g2.drawLine(dest.y, dest.x, dest.y + cell_size, dest.x
+							+ cell_size);
+					g2.drawLine(dest.y, dest.x + cell_size, dest.y + cell_size,
+							dest.x);
+					g2.setStroke(new BasicStroke(1.f));
+
+					continue;
+				}
 
 				if (cell_grid[i][j].isOuch()) {
 					// dessine croix
@@ -264,11 +303,6 @@ public class GameGrid {
 		current = null;
 	}
 
-	public void putPlayerShip(int x, int y, int size, boolean vertical, int num) {
-		// Pour le spectateur, plus tard.
-		submarines.add(new Submarine(x, y, vertical, size, num));
-	}
-
 	public Submarine getCurrent() {
 		return current;
 	}
@@ -351,6 +385,41 @@ public class GameGrid {
 	public void putTouche(int x, int y) {
 		cell_grid[x][y].setTouche(true);
 		observable.notifyView(UpdateArguments.TOUCHE);
+	}
+
+	public void setSpectatorMode() {
+		this.isSpectatorMode = true;
+	}
+
+	public boolean isSpectatorMode() {
+		return isSpectatorMode;
+	}
+
+	public void createNewDronesList() {
+		this.all_drones = new Drone[observable.getPlayers().getAllPlayers()
+				.size()];
+		for (int i = 0; i < all_drones.length; i++) {
+			all_drones[i] = new Drone(i);
+		}
+	}
+
+	/**
+	 * Les joueurs sont numérotés de 0 à 3
+	 */
+
+	public void movePlayerDrone(int num, int x, int y) {
+		all_drones[num].move(x, y);
+		observable.notifyView(UpdateArguments.REDRAW);
+	}
+
+	public void putPlayerOuch(int num, int x, int y) {
+		cell_grid[x][y].setPlayerOuch(num);
+		observable.notifyView(UpdateArguments.REDRAW);
+	}
+
+	public void putPlayerShip(int num, List<Point> positions) {
+		submarines.add(new Submarine(num, positions));
+		observable.notifyView(UpdateArguments.REDRAW);
 	}
 
 }

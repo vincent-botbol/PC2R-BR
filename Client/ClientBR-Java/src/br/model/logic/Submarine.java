@@ -2,20 +2,12 @@ package br.model.logic;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.geom.AffineTransform;
+import java.awt.Point;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
-
 public class Submarine {
-
-	private final static Image red = new ImageIcon("data/sub_red.png")
-			.getImage(), blue = new ImageIcon("data/sub_blue.png").getImage(),
-			green = new ImageIcon("data/sub_green.png").getImage(),
-			yellow = new ImageIcon("data/sub_yellow.png").getImage();
 
 	private int x, y;
 	private boolean isVertical;
@@ -23,27 +15,35 @@ public class Submarine {
 
 	private int playerNum;
 
-	public Submarine(int x, int y, boolean orientation, int size, int playerNum) {
-		super();
+	public Submarine(int x, int y, boolean isVertical, int size, int playerNum) {
 		this.x = x;
 		this.y = y;
-		this.isVertical = orientation;
+		this.isVertical = isVertical;
 		this.size = size;
 		this.playerNum = playerNum;
 	}
 
-	public AffineTransform getTransform() {
-		AffineTransform aff = new AffineTransform();
+	public Submarine(int num, List<Point> positions) {
+		Point origin = new Point(17, 17);
 
-		aff.translate(50 + y * GameGrid.cell_size, 50 + x * GameGrid.cell_size);
-
-		// on scale selon la taille
-
-		// on la tourne de 90° si elle est horizontale
-		if (!isVertical) {
-			aff.rotate(-Math.PI / 2);
+		if (positions.size() > 1) {
+			this.isVertical = positions.get(0).x == positions.get(1).x;
+		} else {
+			this.isVertical = true;
 		}
-		return aff;
+
+		for (Point p : positions) {
+			if (p.x < origin.x)
+				origin = p;
+			if (p.y < origin.y)
+				origin = p;
+		}
+
+		this.x = origin.x;
+		this.y = origin.y;
+
+		this.size = positions.size();
+		this.playerNum = num;
 	}
 
 	public void drawSubmarine(Graphics2D g2) {
@@ -60,8 +60,7 @@ public class Submarine {
 			break;
 		case 1:
 			x += halfcell;
-			// g2.setColor(Color.blue);
-			g2.setColor(Color.GRAY);
+			g2.setColor(Color.gray);
 			break;
 		case 2:
 			y += halfcell;
@@ -86,19 +85,6 @@ public class Submarine {
 			g2.fill(rect);
 		}
 		g2.setColor(c);
-	}
-
-	public Image getImage() {
-		switch (playerNum) {
-		case 0:
-			return red;
-		case 1:
-			return blue;
-		case 2:
-			return green;
-		default:
-			return yellow;
-		}
 	}
 
 	// index inversés sur l'ordonnée

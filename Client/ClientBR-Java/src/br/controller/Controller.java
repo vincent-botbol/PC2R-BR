@@ -38,9 +38,12 @@ public class Controller {
 		// Boutons de la fenetre de connexion
 		ConnectListener cl = new ConnectListener(view, this);
 
-		view.getConnexionPane().getConnect().addActionListener(cl);
 		view.getConnexionPane().getServerComponent().addActionListener(cl);
 		view.getConnexionPane().getLoginComponent().addActionListener(cl);
+		view.getConnexionPane().getCheck_pass().addActionListener(cl);
+		view.getConnexionPane().getCheck_spect().addActionListener(cl);
+		view.getConnexionPane().getConnect().addActionListener(cl);
+		view.getConnexionPane().getRegister().addActionListener(cl);
 
 		// GamePane
 		// Chat
@@ -63,18 +66,29 @@ public class Controller {
 		this.socket = socket;
 	}
 
-	public void establishConnexion(final String pseudo, String host,
-			final int port) {
-		new CommandDispatcher(model, this, view, pseudo, host, port).execute();
+	public void establishConnexion(final String pseudo, String host) {
+		new CommandDispatcher(model, this, view, host, pseudo).execute();
+	}
+
+	/**
+	 * mode spectateur
+	 */
+	public void establishConnexion(String host) {
+		new CommandDispatcher(model, this, view, host).execute();
+	}
+
+	/**
+	 * Login / Register
+	 */
+	public void establishConnexion(String pseudo, String pass, String host,
+			boolean isRegister) {
+		new CommandDispatcher(model, this, view, host, pseudo, pass, isRegister)
+				.execute();
 	}
 
 	// Appelé uniquement par le connectListener
 	public void abortConnection() {
 		closeConnection();
-	}
-
-	public void establishConnexion(String pseudo, String host) {
-		this.establishConnexion(pseudo, host, 2012);
 	}
 
 	public void makeRequest(Request r) {
@@ -99,4 +113,5 @@ public class Controller {
 	public GameGridListener getGameGridListener() {
 		return ggl;
 	}
+
 }

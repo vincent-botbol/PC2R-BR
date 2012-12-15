@@ -47,10 +47,20 @@ public class ModelFacade extends Observable {
 		notifyView(UpdateArguments.CONN_SUCCESS);
 	}
 
+	public void gotWelcomedAsSpectator() {
+		gotWelcomed("spectateur");
+		grid.setSpectatorMode();
+	}
+
 	public void setPlayers(List<String> arguments) {
 		this.players.setAllPlayers(arguments);
-		this.grid.setDrone(new Drone(this.players.getMyIndex()));
-		notifyView(UpdateArguments.GAME_INIT);
+		if (grid.isSpectatorMode()) {
+			this.grid.createNewDronesList();
+			notifyView(UpdateArguments.GAME_INIT_SPECT);
+		} else {
+			this.grid.setDrone(new Drone(this.players.getMyIndex()));
+			notifyView(UpdateArguments.GAME_INIT);
+		}
 	}
 
 	public void resetGame() {

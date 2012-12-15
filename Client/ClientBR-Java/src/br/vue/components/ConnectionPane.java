@@ -5,8 +5,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -16,9 +18,11 @@ public class ConnectionPane extends JPanel {
 	private final JLabel login_label = new JLabel("Pseudo"),
 			server_label = new JLabel("Serveur");
 
-	private JTextField login, server;
+	private JTextField login, server, pass;
 
-	private JButton connect;
+	private JButton connect, register;
+
+	private JCheckBox check_pass, check_spect;
 
 	private JLabel info_start;
 
@@ -31,21 +35,30 @@ public class ConnectionPane extends JPanel {
 		setLayout(new GridBagLayout());
 
 		server = new JTextField("localhost", 20);
-		server.setActionCommand("CONNECT");
 		server_label.setLabelFor(server);
 
 		login = new JTextField("Test", 20);
-		login.setActionCommand("CONNECT");
 		login_label.setLabelFor(login);
+
+		check_pass = new JCheckBox("Pass");
+		check_pass.setActionCommand("PASSWORD");
+		pass = new JPasswordField();
+		pass.setEnabled(false);
+
+		check_spect = new JCheckBox("Mode spectateur");
+		check_spect.setActionCommand("SPECTATOR");
 
 		connect = new JButton("Connexion");
 		connect.setActionCommand("CONNECT");
+
+		register = new JButton("S'enregistrer");
+		register.setActionCommand("REGISTER");
+		register.setEnabled(false);
 
 		info_start = new JLabel();
 
 		gbc = new GridBagConstraints();
 		addComponents();
-
 	}
 
 	private void addComponents() {
@@ -67,10 +80,24 @@ public class ConnectionPane extends JPanel {
 		add(login, gbc);
 
 		gbc.gridy++;
+		gbc.gridx = 0;
+		add(check_pass, gbc);
+		gbc.gridx++;
+		add(pass, gbc);
+
+		gbc.gridy++;
+		gbc.gridx = 0;
+		gbc.gridwidth = 2;
+		add(check_spect, gbc);
+
+		gbc.gridy++;
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
 		gbc.anchor = GridBagConstraints.LINE_END;
 		add(connect, gbc);
+
+		gbc.gridy++;
+		add(register, gbc);
 	}
 
 	/**
@@ -103,7 +130,7 @@ public class ConnectionPane extends JPanel {
 	}
 
 	public JTextField getLoginComponent() {
-		return server;
+		return login;
 	}
 
 	public String getHost() {
@@ -112,6 +139,22 @@ public class ConnectionPane extends JPanel {
 
 	public String getLogin() {
 		return login.getText();
+	}
+
+	public JCheckBox getCheck_pass() {
+		return check_pass;
+	}
+
+	public JCheckBox getCheck_spect() {
+		return check_spect;
+	}
+
+	public JTextField getPass() {
+		return pass;
+	}
+
+	public JButton getRegister() {
+		return register;
 	}
 
 	private static final long serialVersionUID = 1L;

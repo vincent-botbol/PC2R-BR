@@ -48,6 +48,21 @@ public class Players {
 		return str.toString();
 	}
 
+	public String allPlayersToString() {
+		StringBuilder str = new StringBuilder();
+
+		int cpt = 0;
+		for (String n : allPlayers) {
+			str.append(n);
+			if (cpt == allPlayers.size() - 2)
+				str.append(" et ");
+			else if (cpt < allPlayers.size() - 2)
+				str.append(", ");
+			cpt++;
+		}
+		return str.toString();
+	}
+
 	public int getPlayerIndex(String s) {
 		int res = 0;
 		for (String p : allPlayers)

@@ -36,8 +36,7 @@ public class Drone extends Point {
 			break;
 		case 1:
 			x += halfcell;
-			// g2.setColor(Color.blue);
-			c = Color.GRAY;
+			c = Color.gray;
 			break;
 		case 2:
 			y += halfcell;
@@ -57,6 +56,6 @@ public class Drone extends Point {
 		g2.fillOval((int) (x + this.x), (int) (y + this.y),
 				(int) (halfcell / 2), (int) (halfcell / 2));
 	}
-	
+
 	private static final long serialVersionUID = 1L;
 }

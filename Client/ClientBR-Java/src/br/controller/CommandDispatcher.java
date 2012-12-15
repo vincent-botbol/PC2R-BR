@@ -7,6 +7,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import br.controller.net.ERequest;
 import br.controller.net.Request;
 import br.controller.net.Response;
 import br.model.ModelFacade;
+import br.run.Main;
 import br.vue.ViewFacade;
 
 class CommandDispatcher extends SwingWorker<Void, Response> {
@@ -32,12 +34,40 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	private boolean isSpectator;
 
 	public CommandDispatcher(ModelFacade model, Controller controller,
-			ViewFacade view, String pseudo, String host, int port) {
+			ViewFacade view, String host, String pseudo) {
 		this.model = model;
 		this.controller = controller;
-		this.pseudo = pseudo;
 		this.host = host;
+		this.pseudo = pseudo;
 		this.view = view;
+		this.isCleanDisconnect = false;
+		// this.isSpectator = false;
+	}
+
+	public CommandDispatcher(ModelFacade model, Controller controller,
+			ViewFacade view, String host) {
+		this.model = model;
+		this.controller = controller;
+		this.view = view;
+		this.host = host;
+		this.pass = null;
+		this.pseudo = null;
+		this.isCleanDisconnect = false;
+		this.isSpectator = true;
+	}
+
+	public CommandDispatcher(ModelFacade model, Controller controller,
+			ViewFacade view, String host, String pseudo, String pass,
+			boolean isRegister) {
+		this.model = model;
+		this.controller = controller;
+		this.view = view;
+		this.host = host;
+		this.pseudo = pseudo;
+		this.pass = pass;
+		this.isRegister = isRegister;
+		this.isCleanDisconnect = false;
+		this.isSpectator = false;
 	}
 
 	@Override
@@ -55,7 +85,18 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		}
 
 		try {
-			socket = new ClientSocket(addr, pseudo);
+			// Spectator
+			if (pass == null && pseudo == null) {
+				socket = new ClientSocket(addr);
+			} else
+			// Connect
+			if (pass == null) {
+				socket = new ClientSocket(addr, pseudo);
+			}
+			// Register / login
+			else {
+				socket = new ClientSocket(addr, pseudo, pass, this.isRegister);
+			}
 		} catch (IOException e1) {
 			model.notifyView(UpdateArguments.CONN_FAILED);
 			return null;
@@ -68,22 +109,39 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	private Void startReadingLoop(ClientSocket socket) {
 		try {
+<<<<<<< HEAD
 			// System.out.println("DEBUG : Connexion etablie - En attente");
+=======
+			if (Main.DEBUG)
+				System.out.println("DEBUG : Connexion etablie - En attente");
+>>>>>>> Ajout spectateur Java
 			Response r;
 			while (true) {
 				try {
 					r = socket.receiveResponse();
+<<<<<<< HEAD
 					// System.out.println("DEBUG : Response reçue = " + r);
+=======
+					if (Main.DEBUG)
+						System.out.println("DEBUG : Response reçue = " + r);
+>>>>>>> Ajout spectateur Java
 					publish(r);
 				} catch (ParseException e) {
 					System.err.println(e.getMessage());
 				}
 			}
 		} catch (IOException e) {
-			System.err.println("Error : connexion lost");
-			JOptionPane.showMessageDialog(null, e.getMessage(), "Fatal error",
-					JOptionPane.ERROR_MESSAGE);
-			System.exit(1);
+			if (isCleanDisconnect) {
+				this.isCleanDisconnect = false;
+				return null;
+			} else {
+				if (Main.DEBUG)
+					System.err.println("Error : connexion lost");
+				JOptionPane.showMessageDialog(null,
+						"La connexion a été interrompue", "Fatal error",
+						JOptionPane.ERROR_MESSAGE);
+				System.exit(1);
+			}
 		}
 		return null;
 	}
@@ -96,6 +154,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	private void dispatch(Response r) {
 		switch (r.getCommand()) {
 		case ACCESSDENIED:
+			model.notifyView(this.isRegister ? UpdateArguments.REGISTER_FAILED
+					: UpdateArguments.LOGIN_FAILED);
+			this.isCleanDisconnect = true;
+			controller.closeConnection();
 			break;
 		case ALLYOURBASE:
 			controller.getGameGridListener().setPlacing(false);
@@ -165,7 +227,10 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 			processActionResult(r.getArguments(), 2);
 			break;
 		case WELCOME:
-			welcomeProcess(r.getArguments().get(0));
+			if (isSpectator)
+				welcomeProcess();
+			else
+				welcomeProcess(r.getArguments().get(0));
 			break;
 		case WRONG:
 			controller.getGameGridListener().setPlacing(true);
@@ -179,6 +244,32 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		case YOURTURN:
 			yourTurnProcess(r.getArguments());
 			break;
+		case PLAYERMOVE:
+			int playerNum = model.getPlayers().getPlayerIndex(
+					r.getArguments().get(0));
+			Point p = toIndexes(r.getArguments().get(1), r.getArguments()
+					.get(2));
+			model.getGrid().movePlayerDrone(playerNum, p.x, p.y);
+			break;
+		case PLAYEROUCH:
+			playerNum = model.getPlayers().getPlayerIndex(
+					r.getArguments().get(0));
+			p = toIndexes(r.getArguments().get(1), r.getArguments().get(2));
+			model.getGrid().putPlayerOuch(playerNum, p.x, p.y);
+			break;
+		case PLAYERSHIP:
+			playerNum = model.getPlayers().getPlayerIndex(
+					r.getArguments().get(0));
+			List<Point> pos = new ArrayList<>(4);
+			for (int i = 1; i < r.getArguments().size(); i += 2) {
+				pos.add(toIndexes(r.getArguments().get(i), r.getArguments()
+						.get(i + 1)));
+			}
+			for (Point c : pos)
+				System.out.print(c + " ");
+			System.out.println();
+			model.getGrid().putPlayerShip(playerNum, pos);
+			break;
 		default:
 			break;
 		}
@@ -189,7 +280,6 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	}
 
 	private void processActionResult(List<String> arguments, int i) {
-
 		Point pos = toIndexes(arguments.get(0), arguments.get(1));
 		switch (i) {
 		// miss
@@ -210,8 +300,12 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 		model.setPlayers(arguments);
 	}
 
-	private void welcomeProcess(String name) {
-		model.gotWelcomed(name);
+	private void welcomeProcess() {
+		model.gotWelcomedAsSpectator();
+	}
+
+	private void welcomeProcess(String pseudo) {
+		model.gotWelcomed(pseudo);
 	}
 
 	private void yourTurnProcess(List<String> args) {
@@ -228,8 +322,13 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 	}
 
 	private void processEndGame() {
-		if (JOptionPane.showConfirmDialog(null, "Souhaitez-vous rejouer?",
-				"Fin du jeu", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+		if (isSpectator) {
+			JOptionPane.showMessageDialog(null,
+					"Fin de la partie, cliquez pour quitter");
+			System.exit(0);
+		} else if (JOptionPane.showConfirmDialog(null,
+				"Souhaitez-vous rejouer?", "Fin du jeu",
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 			controller.makeRequest(new Request(ERequest.PLAYAGAIN, Collections
 					.<String> emptyList()));
 			String monPseudo = model.getPlayers().getMyPseudo();

@@ -10,6 +10,7 @@ import java.nio.channels.ClosedChannelException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ClientSocket {
@@ -18,20 +19,29 @@ public class ClientSocket {
 	private BufferedReader in;
 	private DataOutputStream out;
 
-	/**
-	 * 
-	 * @param pseudo
-	 * @param host
-	 * @param port
-	 * @throws IOException
-	 * 
-	 */
+	public ClientSocket(InetAddress addr) throws IOException {
+		openConnexion(addr);
+		makeRequest(new Request(ERequest.SPECTATOR,
+				Collections.<String> emptyList()));
+	}
 
 	public ClientSocket(InetAddress addr, String pseudo) throws IOException {
+		openConnexion(addr);
+		makeRequest(new Request(ERequest.CONNECT, Arrays.asList(pseudo)));
+	}
+
+	public ClientSocket(InetAddress addr, String pseudo, String pass,
+			boolean isRegister) throws IOException {
+		openConnexion(addr);
+		makeRequest(new Request(
+				isRegister ? ERequest.REGISTER : ERequest.LOGIN, Arrays.asList(
+						pseudo, pass)));
+	}
+
+	private void openConnexion(InetAddress addr) throws IOException {
 		sock = new Socket(addr, 2012);
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		out = new DataOutputStream(sock.getOutputStream());
-		makeRequest(new Request(ERequest.CONNECT, Arrays.asList(pseudo)));
 	}
 
 	public void makeRequest(Request r) throws IOException {

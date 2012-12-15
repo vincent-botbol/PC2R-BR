@@ -46,7 +46,7 @@ let start_cond = Condition.create ()
 module RegExp =
   struct
     (* Marche sans le $ *)
-    let regex_conn = regexp (Printf.sprintf "^CONNECT/\\([^/]+\\)/%c?$" (char_of_int 13))
+    let regex_conn = regexp (Printf.sprintf "^CONNECT/\\(.+\\)/%c?$" (char_of_int 13))
     let regex_quit = regexp (Printf.sprintf "^QUIT/%c?" (char_of_int 13))
     let str_entier = "\\([0-9]\\|1[0-5]\\)"
     let reg_entier = regexp str_entier
@@ -69,6 +69,10 @@ module Utils =
 
     let gen_num2 = let c = ref 0 in (fun () -> incr c; !c)
 
+    let random_drone () =
+      Random.self_init();
+      Random.int 16, Random.int 16
+
     let client_from_name name  =
       try
 	List.find (fun c -> c.nom = name) !clients
@@ -84,6 +88,8 @@ module Utils =
 
     let names () = List.fold_left (fun acc c-> "/"^c.nom^acc) "" !clients
 
+    let my_split str =
+      ()
 
     let my_input_line  fd = 
       let s = " "  and  r = ref "" 
@@ -103,8 +109,12 @@ module Utils =
 	(Unix.gethostbyname Sys.argv.(1)).Unix.h_addr_list.(0)
       with
 	| Invalid_argument "index out of bounds" ->
+<<<<<<< HEAD
 	    (Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)
 >>>>>>> update java
+=======
+	  (Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)
+>>>>>>> Ajout spectateur Java
       (*(Unix.gethostbyname(Unix.gethostname())).Unix.h_addr_list.(0)*)
 	
 
@@ -120,7 +130,7 @@ module Utils =
       send_to_players msg s_descr;
       send_to_spectators msg s_descr
 
-    let nb_waiting () = List.length (List.filter (fun c -> c.phase = WAITING) !clients)
+    let nb_state etat = List.length (List.filter (fun c -> c.phase = etat) !clients)
 
     let all_waiting () = List.for_all (fun c -> c.phase = WAITING) !clients
 
@@ -180,7 +190,7 @@ module Utils =
     let reset_client c =
       c.phase <- WAITING;
       c.bateaux <- [];
-      c.drone <- 5,5
+      c.drone <- random_drone ()
 
   end
 
@@ -227,10 +237,16 @@ struct
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
   let () = if not (Sys.file_exists "logins.txt") then ignore (open_out "logins.txt")
 >>>>>>> update java
+=======
+  let () =
+    if not (Sys.file_exists "./logins.txt") then
+      ignore (open_out "logins.txt")
+>>>>>>> Ajout spectateur Java
 
-  let check_connect name = 
+    let check_connect name = 
     let chan = open_in "logins.txt" in
       try
 	let cont = ref true in
@@ -239,9 +255,10 @@ struct
 	  assert ((List.length ligne) = 2);
 	  if (List.hd ligne) = name then cont := false
 	done;
+	Printf.printf "TRACE : Login %s is already used\n%!" name;
 	!cont
       with
-	| End_of_file -> true
+	| End_of_file -> Printf.printf "TRACE : Login %s is available\n%!" name;true
 	| Assert_failure _ -> Printf.printf "TRACE.exn -> malformed logins file\n%!"; false
 
     let check_login name pswd =
@@ -327,7 +344,7 @@ struct
 	begin
 	  let name =
 	    let rec aux nom =
-	      if List.exists (fun c -> c.nom = nom) !clients then
+	      if (List.exists (fun c -> c.nom = nom) !clients) || not (Register.check_connect nom) then
 		aux (nom^(string_of_int (Utils.gen_num2())))
 	      else
 		nom
@@ -337,9 +354,9 @@ struct
 	  my_output_line s_descr (Printf.sprintf "WELCOME/%s/\n" name);
 	  Mutex.lock clients_mutex;
 	  (* TO DO : gerer le placement du drone *)
-	  clients:={nom=name;chan=s_descr;bateaux=[];phase=WAITING;drone=5,5}::!clients;
+	  clients:={nom=name;chan=s_descr;bateaux=[];phase=WAITING;drone=Utils.random_drone()}::!clients;
 	  Mutex.unlock clients_mutex;
-	  match (nb_waiting ()) with
+	  match (nb_state WAITING) with
 	    | 2 -> 
 <<<<<<< HEAD
 	      (*timer := Some (Thread.create timer_thread ()); *)
@@ -379,14 +396,16 @@ struct
 	    let pswd = matched_group 2 commande_recue in
 	    if Register.check_connect nom then
 	      begin
-		Printf.printf "TRACE : login %s is available\n%!" nom;
 		treat_connexion nom s_descr;
 		Register.add nom pswd;
 		Printf.printf "TRACE : login %s added with password %s\n%!" nom pswd;
 		exit_value := 1
 	      end
 	    else
-	      my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
+	      begin
+		my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!");
+		Stop.stop_thread_client s_descr
+	      end
 	  else if string_match RegExp.reg_login commande_recue 0 then
 	    let nom = matched_group 1 commande_recue in
 	    let pswd = matched_group 2 commande_recue in
@@ -397,13 +416,16 @@ struct
 		exit_value := 1
 	      end
 	    else
-	      my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
+	      begin
+		my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!");
+		Stop.stop_thread_client s_descr
+	      end
 	  else if commande_recue = "" then
 	    Stop.stop_thread_client ~timer:timer s_descr
 	  else
-	    my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
+	    my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!")
 	with
-	  | Acces_denied -> my_output_line s_descr (Printf.sprintf "ACCESDENIED/\n%!")
+	  | Acces_denied -> my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!")
       done;
       !exit_value
 
@@ -514,7 +536,7 @@ module End_of_game =
 	    Printf.printf "TRACE : player %s wants to play again\n%!" client.nom;
 	    cont := false;
 	    reset_client client;
-	    match nb_waiting () with
+	    match nb_state WAITING with
 	      | 2 -> Connexion.timer := Some (Thread.create Connexion.timer_thread ())
 	      | 4 -> Connexion.timer := None; Connexion.start_game ()
 	      | _ -> ()
@@ -595,7 +617,7 @@ module Game =
 	    )
 	    l;
 	  map.(x).(y) <- [];
-	  if List.for_all (fun c -> c.phase = WAITING) !clients then
+	  if ((List.length !clients) - (nb_state DEAD)) < 2  then
 	    match !game_over with
 	      | [] -> raise Uncorrect_action
 	      | [c] -> send_to_all (Printf.sprintf "AWINNERIS/%s/\n" c) s_descr; end_game ()
@@ -785,13 +807,13 @@ object (self)
   val port = p 
   val mutable sock = ThreadUnix.socket Unix.PF_INET Unix.SOCK_STREAM 0
     
-  initializer
+  initializer 
     Unix.setsockopt sock Unix.SO_REUSEADDR true;
     let mon_adresse = get_my_addr () in
-      Printf.printf "Adresse du serveur : %s\n%!" (Unix.string_of_inet_addr mon_adresse);
-      Unix.bind sock (Unix.ADDR_INET(mon_adresse,port)) ;
-      Unix.listen sock 3
-	
+    Printf.printf "Adresse du serveur : %s\n%!" (Unix.string_of_inet_addr mon_adresse);
+    Unix.bind sock (Unix.ADDR_INET(mon_adresse,port)) ;
+    Unix.listen sock 3
+    
   method private client_addr = function 
   Unix.ADDR_INET(host,_) -> Unix.string_of_inet_addr host
     | _ -> "Unexpected client"

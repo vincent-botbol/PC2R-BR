@@ -11,7 +11,7 @@ public class MainFrame extends JFrame {
 
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		setVisible(true);
-		// setMinimumSize(new Dimension(400, 300));
+
 	}
 
 	public void setFrameContentPane(Container c) {
@@ -20,5 +20,4 @@ public class MainFrame extends JFrame {
 	}
 
 	private static final long serialVersionUID = 1L;
-
 }
