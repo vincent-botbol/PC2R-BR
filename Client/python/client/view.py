@@ -4,7 +4,7 @@
 
 import wx
 import wx.lib.stattext
-import wx.lib.buttons
+import mybuttons
 import os
 
 #img = wx.Image("../img/sea.jpg")
@@ -14,8 +14,8 @@ class View(wx.Panel):
     def __init__(self,parent):
         super(View, self).__init__(parent)
         print os.getcwd()
-        self.seaBmp = wx.Bitmap("img/sea.jpg",wx.BITMAP_TYPE_JPEG)
-        self.subBmp =  wx.Bitmap("img/submarin.jpeg",wx.BITMAP_TYPE_JPEG)
+        #self.seaBmp = wx.Bitmap("img/sea.jpg",wx.BITMAP_TYPE_JPEG)
+        #self.subBmp =  wx.Bitmap("img/submarin.jpeg",wx.BITMAP_TYPE_JPEG)
         self.buts = []
         self.count = 0
         self.pos = None
@@ -24,17 +24,16 @@ class View(wx.Panel):
         gs=wx.GridSizer(17,17,0,0)
         gs.AddStretchSpacer()
         for i in range(16):
-            st = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,str(chr(ord('A')+i)),style=wx.ALIGN_CENTRE)
+            st = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,str(i),style=wx.ALIGN_CENTRE)
             gs.Add(st,proportion=1,flag=wx.ALIGN_CENTRE)
         for i in range(16) :
-            st = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,str(15-i),style=wx.ALIGN_CENTRE)
+            st = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,str(chr(ord('A')+15-i)),style=wx.ALIGN_CENTRE)
             gs.Add(st,proportion=1,flag=wx.ALIGN_CENTRE)
             for j in range(16):
-                but = wx.BitmapButton(self,wx.ID_ANY,self.seaBmp
-                                      ,name=str(i)+'/'+str(chr(ord('A')+j))+'/'
-                                      ,style=wx.BORDER_NONE)
+                but = mybuttons.BitmapButton(self,wx.ID_ANY,str(j)+'/'+str(chr(ord('A')+15-i))+'/'
+                                             ,wx.BORDER_NONE)
                 but.Bind(wx.EVT_BUTTON,parent.onBut)
-                but.SetBitmapLabel(self.seaBmp)
+                #but.SetBitmapLabel(self.seaBmp)
                 #but.SetMargins(0,0)
                 #but = wx.StaticBitmap(self,wx.ID_ANY,self.bmp)
                 #but.Bind(wx.EVT_SET_FOCUS,self.onFocus)
@@ -100,5 +99,5 @@ class View(wx.Panel):
         e.Skip()
 
     def onBut(self,e):
-        e.GetEventObject().SetBitmapLabel(self.subBmp)
+        # e.GetEventObject().SetBitmapLabel(self.subBmp)
         e.Skip()
