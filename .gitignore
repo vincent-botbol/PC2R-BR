@@ -24,3 +24,7 @@ Client/.metadata/*
 
 #Python
 *.pyc
+
+#Latex
+*.aux
+*.log
