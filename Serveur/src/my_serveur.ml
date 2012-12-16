@@ -513,7 +513,7 @@ module End_of_game =
       Unix.sleep 30;
       List.iter (fun c -> if c.phase = DEAD then Stop.stop_thread_client c.chan)
     
-    let new_game client =
+    let end_game client =
       let cont = ref true in
       while !cont do
 	let cmd = my_input_line client.chan in
@@ -578,7 +578,6 @@ module Game =
 	boats
       
 	    
-    let end_game () = ()
       
       
 
@@ -610,8 +609,10 @@ module Game =
 	  if ((List.length !clients) - (nb_state DEAD)) < 2  then
 	    match !game_over with
 	      | [] -> raise Uncorrect_action
-	      | [c] -> send_to_all (Printf.sprintf "AWINNERIS/%s/\n" c); end_game ()
-	      | _ -> send_to_all "DRAWGAME/\n"; end_game ()
+	      | [_] ->
+		send_to_all (Printf.sprintf "AWINNERIS/%s/\n" (List.find (fun c -> c.phase <> DEAD) !clients).nom);
+		List.iter End_of_game.end_game !clients;
+	      | _ -> send_to_all "DRAWGAME/\n"; List.iter End_of_game.end_game !clients
 	    
     
 

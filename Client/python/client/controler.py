@@ -273,7 +273,7 @@ class Action(threading.Thread):
                  e=myEvent(myEVT_RM_DRONE,-1,None)
                  wx.PostEvent(self.parent,e)
                  action.append('\n')
-                 print ''.join(action)
+                 print "action:"+''.join(action)
                  self.sock.send('ACTION/'+''.join(action))
                  rep = self.sock.readline()
                  l=re.split("(?<!\\\)/",rep)
