@@ -9,7 +9,7 @@ public class Main {
 	public static boolean DEBUG = false;
 
 	public static void main(String[] args) {
-		DEBUG = true;
+		DEBUG = false;
 		ModelFacade model = new ModelFacade();
 		ViewFacade vue = new ViewFacade(model);
 		@SuppressWarnings("unused")

@@ -109,6 +109,9 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 
 	private Void startReadingLoop(ClientSocket socket) {
 		try {
+			// On suppose que le spectator ne reçoit pas de welcome
+			if (isSpectator)
+				welcomeProcess();
 			if (Main.DEBUG)
 				System.out.println("DEBUG : Connexion etablie - En attente");
 			Response r;
@@ -257,9 +260,7 @@ class CommandDispatcher extends SwingWorker<Void, Response> {
 				pos.add(toIndexes(r.getArguments().get(i), r.getArguments()
 						.get(i + 1)));
 			}
-			for (Point c : pos)
-				System.out.print(c + " ");
-			System.out.println();
+
 			model.getGrid().putPlayerShip(playerNum, pos);
 			break;
 		default:
