@@ -56,7 +56,8 @@ class View(wx.Panel):
         box.Add(self.chatEntry,proportion=1)
         box.Add(self.sendButton,proportion=1)
 
-        self.playerInfo = wx.StaticText(self,wx.ID_ANY,"Aucun joueur")
+        self.playerInfo = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,"")
+        self.playerInfo.SetLabel("Aucun Joueur pour le moment")
         
         vbox.Add(self.playerInfo,proportion=1,flag=wx.EXPAND|wx.CENTRE)
         vbox.Add(self.chatAll,proportion=1,flag=wx.EXPAND|wx.CENTRE)

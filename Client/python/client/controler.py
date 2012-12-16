@@ -17,6 +17,7 @@ finishWaitEvt = threading.Event()
 chatEvt = threading.Event()
 finishPutShipEvt = threading.Event()
 finishEvt = threading.Event()
+mouseRightClickEvt = threading.Event()
 
 myEVT_UPDATE_BAR = wx.NewEventType()
 EVT_UPDATE_BAR = wx.PyEventBinder(myEVT_UPDATE_BAR, 1)
@@ -38,6 +39,15 @@ EVT_OUCH = wx.PyEventBinder(myEVT_OUCH, 1)
 
 myEVT_REFRESH_DRONE = wx.NewEventType()
 EVT_REFRESH_DRONE = wx.PyEventBinder(myEVT_REFRESH_DRONE,1)
+
+myEVT_DEATH = wx.NewEventType()
+EVT_DEATH = wx.PyEventBinder(myEVT_DEATH,1)
+
+myEVT_RM_DRONE = wx.NewEventType()
+EVT_RM_DRONE = wx.PyEventBinder(myEVT_RM_DRONE,1)
+
+myEVT_REFRESH_BUT = wx.NewEventType()
+EVT_REFRESH_BUT = wx.PyEventBinder(myEVT_REFRESH_BUT,1)
 
 class myEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, value=None):
@@ -150,17 +160,17 @@ class PutShip(threading.Thread):
                     pos.append(self.parent.currentBut)
                     print pos
                 
-                chatEvt.clear()
+                #chatEvt.clear()
                 self.parent.count=0
-                print pos
+                #print pos
                 self.sock.send('PUTSHIP/'+''.join(pos)+'\n')
                 # print "ici"
                 # rep = self.sock.recv(4096)
-                print "ici"
+                #print "ici"
                 rep = self.sock.readline()
                 # print self.sock.readline()
                 l = re.split("(?<!\\\)/",rep)
-                print "recue apres placement :  "+str(l)
+                #print "recue apres placement :  "+str(l)
                 while l[0] != 'OK':
                     if l[0] == 'WRONG':                        
                         # print "pas content"
@@ -184,9 +194,11 @@ class PutShip(threading.Thread):
             rep = self.sock.readline()
             l = re.split("(?<!\\\)/",rep)
                 
-        self.parent.pos.append(pos)
+        # self.parent.pos.append(pos)
+        e=myEvent(myEVT_UPDATE_BAR,-1,"En attente de votre tour")
+        wx.PostEvent(self.parent,e)        
         finishPutShipEvt.set()
-        
+
 
 class Action(threading.Thread):
      def __init__(self,parent,sock):
@@ -198,23 +210,92 @@ class Action(threading.Thread):
          finishPutShipEvt.wait()
          rep = self.sock.readline()
          l = re.split("(?<!\\\)/",rep)
-         
-         while ((l[0] <> 'AWINNERIS') or (l[0] <> 'DRAWGAME')):
+         while ((l[0] <> 'AWINNERIS') and (l[0] <> 'DRAWGAME')):
              if l[0] == "HEYLISTEN":
-                 
                  e = myEvent(myEVT_UPDATE_CHAT,-1,l)
                  wx.PostEvent(self.parent,e) 
-                 
              if l[0] == 'OUCH':
-                 
                  e = myEvent(myEVT_OUCH, -1, l)
                  wx.PostEvent(self.parent,e)
-
-             if l[0] == 'YOURTURN':
-                 
-                 e = myEvent(myEVT_REFRESH_DRONE,-1,l)
+             if l[0] == 'DEATH':
+                 e = myEvent(myEVT_DEATH, -1, l)
                  wx.PostEvent(self.parent,e)
-                 break
+             if l[0] == 'YOURTURN':
+                 x = int(l[1])
+                 y = l[2]
+                 a = int(l[3])
+                 action=[]
+                 actif=True
+                 e = myEvent(myEVT_REFRESH_DRONE,-1,(l,actif))
+                 wx.PostEvent(self.parent,e)
+                 e=myEvent(myEVT_UPDATE_BAR,-1,"A votre tour de jouer")
+                 wx.PostEvent(self.parent,e)
+                 self.parent.count = 2
+                 while(a>0):
+                     onButEvt.wait()
+                     onButEvt.clear()
+                     if  mouseRightClickEvt.is_set():
+                         mouseRightClickEvt.clear()
+                         break
+                     but = re.split("(?<!\\\)/",self.parent.currentBut)
+                     if int(but[0]) == x and but[1] == y:
+                         if actif :
+                             print "activation du laser"
+                             action.append('E/')
+                             actif=False
+                             a = a-1
+                         else:
+                             print "passage de tour"
+                             break
+                     else :
+                         dx = int(but[0])-x
+                         dy = ord(but[1])-ord(y)
+                         if dx == abs(dx):
+                             action.append('R/'*dx)
+                         else:
+                             action.append('L/'*abs(dx))
+                         if dy == abs(dy):
+                             action.append('U/'*dy)
+                         else:
+                             action.append('D/'*abs(dx))
+                         print "on a bougé et a vaut : "+str(a)
+                         a -= abs(dx)+abs(dy)
+                         x=int(but[0])
+                         y=but[1]
+                     print "a enfin de boucle : "+str(a)
+                     if a<=0:
+                          break
+                     e=myEvent(myEVT_RM_DRONE,-1,None)
+                     wx.PostEvent(self.parent,e)
+                     e=myEvent(myEVT_REFRESH_DRONE,-1,(['',str(x),y,str(a)],actif))
+                     wx.PostEvent(self.parent,e)
+                 self.parent.count = 0
+                 e=myEvent(myEVT_RM_DRONE,-1,None)
+                 wx.PostEvent(self.parent,e)
+                 action.append('\n')
+                 print ''.join(action)
+                 self.sock.send('ACTION/'+''.join(action))
+                 rep = self.sock.readline()
+                 l=re.split("(?<!\\\)/",rep)
+                 # print l
+                 while l[0] == "HEYLISTEN":
+                     e = myEvent(myEVT_UPDATE_CHAT,-1,l)
+                     wx.PostEvent(self.parent,e)
+                     rep = self.sock.readline()
+                     l=re.split("(?<!\\\)/",rep)
+                 but = self.parent.viou.buts[int(l[1])+(ord('P')-ord(l[2]))*16]
+                 if l[0] =='MISS':
+                     e = myEvent(myEVT_REFRESH_BUT,-1,(but,mybuttons.MISS))
+                     wx.PostEvent(self.parent,e)
+                 elif l[0] =='TOUCHE':
+                     e = myEvent(myEVT_REFRESH_BUT,-1,(but,mybuttons.TOUCHE))
+                     wx.PostEvent(self.parent,e)
+                 else:
+                     continue
+             print "et c'est reparti"
+             rep = self.sock.readline()
+             l = re.split("(?<!\\\)/",rep)
+                 
 
 class Controler(wx.Frame):
     
@@ -247,8 +328,11 @@ class Controler(wx.Frame):
         self.Bind(EVT_TOUCHE,self.touche)
         self.Bind(EVT_MISS,self.miss)
         self.Bind(EVT_OUCH,self.ouch)
-        self.Bind(EVT_REFRESH_DRONE,self.refreshDrone)
-
+        self.Bind(EVT_REFRESH_DRONE,self.drawDrone)
+        self.Bind(EVT_RM_DRONE,self.removeDrone)
+        self.Bind(wx.EVT_RIGHT_DOWN,self.onRightClick)
+        self.Bind(EVT_REFRESH_BUT,self.refreshBut)
+        self.Bind(EVT_DEATH,self.death)
 
         #self.mask = wx.Bitmap("img/mask.jpg",wx.BITMAP_TYPE_JPEG)
         #self.unmask = wx.Bitmap("img/unmask.jpg",wx.BITMAP_TYPE_JPEG)
@@ -256,6 +340,7 @@ class Controler(wx.Frame):
         finishEvt.clear()
         finishWaitEvt.clear()
         finishPutShipEvt.clear()
+        onButEvt.clear()
 
         wp = WaitPlayers(self,self.sock)
         wp.start()
@@ -266,48 +351,102 @@ class Controler(wx.Frame):
         a = Action(self,self.sock)
         a.start()
     
-    def refreshDrone(self,e):
-        l = e.GetValue()
+    def death(self,e):
+        pass
+
+    def refreshBut(self,e):
+        (but,flag)=e.GetValue()
+        but.addFlag(flag)
+        print "flag : "+str(but.flag)
+        but.changeBMP()
+        print "bitmap OK"
+
+    def onRightClick(self,e):
+        mouseRightClickEvt.set()
+        onButEvt.set()        
+
+    def drawDrone(self,e):
+        (l,actif) = e.GetValue()
         x = int(l[1])
         y = l[2]
         a = int(l[3])
-        but = self.viou.buts[x+(ord('P')-ord(y))*16]
-        but.changeBMP(mybuttons.SEA|mybuttons.RED)
+        self.pos = []
+        if actif :
+            self.pos.append(x+(ord('P')-ord(y))*16)
+            but = self.viou.buts[x+(ord('P')-ord(y))*16]
+            but.addFlag(mybuttons.RED)
+            but.changeBMP()
+        for i in range(-a,a+1):
+            u=x+i
+            for j in range(-a,a+1):
+                v=ord(y)+j
+                d = abs(x-u)+abs(ord(y)-v)
+                if (d <> 0 and d <=a):
+                    self.pos.append(u+(ord('P')-v)*16)
+                    but = self.viou.buts[u+(ord('P')-v)*16]
+                    but.addFlag(mybuttons.GREEN)
+                    but.changeBMP()
+    
+    def removeDrone(self,e):
+        for p in self.pos :
+            but = self.viou.buts[p]
+            but.removeFlag(mybuttons.RED|mybuttons.GREEN)
+            but.changeBMP()
+        self.pos = []
+
         
     def miss(self,e):
-        pass
+        l = e.GetValue()
+        x = int(l[1])
+        y = l[2]
+        but = self.viou.buts[x+(ord('P')-ord(y))*16]
+        but.addFlag(mybuttons.MISS)
+        but.changeBMP()
 
     def touche(self,e):
-        pass
+        l = e.GetValue()
+        x = int(l[1])
+        y = l[2]
+        but = self.viou.buts[x+(ord('P')-ord(y))*16]
+        but.addFlag(mybuttons.TOUCHE)
+        but.changeBMP()
         
     def ouch(self,e):
-        pass
+        l = e.GetValue()
+        x = int(l[1])
+        y = l[2]
+        but = self.viou.buts[x+(ord('P')-ord(y))*16]
+        but.addFlag(mybuttons.OUCH)
+        but.changeBMP()
 
     def waitPlayers(self,evt):
         self.players = evt.GetValue()
-        
-
-    def putShip(self):
-        #finishEvt.clear()
-        t = PutShip(self,self.sock)
-        t.start()
-
+        l=[]
+        for p in self.players:
+            l.append(p+'\n')
+        self.viou.playerInfo.SetLabel(''.join(l))
 
     def onBut(self,e):
-        if self.count != 0:
+        if self.count == 1:
             self.b = e.GetEventObject()
             #self.b.SetBitmapLabel(self.viou.subBmp)
-            self.b.changeBMP(mybuttons.SUBM)
+            self.b.changeFlag(mybuttons.SUBM)
+            self.b.changeBMP()
             self.currentBut = e.GetEventObject().GetName()
             onButEvt.set()
-            
+        if self.count == 2:
+            self.b = e.GetEventObject()
+            self.currentBut = e.GetEventObject().GetName()
+            onButEvt.set()
 
     def resetBmp(self,pos):
         for name in pos:
             l = re.split("(?<!\\\)/",name)
-            print l
+            # print l
             print int(l[0])+(ord('P')-ord(l[1]))*16
-            self.viou.buts[int(l[0])+(ord('P')-ord(l[1]))*16].changeBMP(mybuttons.SEA)
+            but = self.viou.buts[int(l[0])+(ord('P')-ord(l[1]))*16]
+            but.changeFlag(mybuttons.SEA)
+            but.changeBMP()
 
     def onEnter(self,e):
         mes = self.viou.chatEntry.GetValue()

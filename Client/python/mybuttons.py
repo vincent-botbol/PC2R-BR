@@ -34,13 +34,21 @@ class BitmapButton(wx.BitmapButton):
         self.submarin_touche_green = wx.Bitmap("img/submarin/touche/green.jpg",wx.BITMAP_TYPE_JPEG)
         self.submarin_touche_normal = wx.Bitmap("img/submarin/touche/normal.jpg",wx.BITMAP_TYPE_JPEG)
         self.submarin_touche_red = wx.Bitmap("img/submarin/touche/red.jpg",wx.BITMAP_TYPE_JPEG)
-        self.changeBMP(self.flag)
+        self.changeBMP()
         
 
-    def changeBMP(self,flag):
-        self.flag= flag
-        bmp = self.choose(flag)
+    def changeBMP(self):
+        bmp = self.choose(self.flag)
         self.SetBitmapLabel(bmp)
+
+    def changeFlag(self,flag):
+        self.flag = flag
+
+    def addFlag(self,flag):
+        self.flag = self.flag | flag
+
+    def removeFlag(self,flag):
+        self.flag = self.flag &~ flag
 
     def choose(self,flag):
         if SEA & flag:

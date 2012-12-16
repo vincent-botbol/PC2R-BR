@@ -44,7 +44,7 @@ class Socket(socket):
             ls = self.linesplit()
             for s in ls:
                 bufferSocket.append(s)
-        print "bufferSocket : "+str(bufferSocket)
+        #print "bufferSocket : "+str(bufferSocket)
         x = bufferSocket[0]
         print "x : "+x
         del bufferSocket[0]
