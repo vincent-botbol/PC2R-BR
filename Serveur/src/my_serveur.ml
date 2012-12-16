@@ -358,9 +358,9 @@ struct
 	  Mutex.unlock clients_mutex;
 	  match (nb_state WAITING) with
 	    | 2 -> 
-	      timer := Some (Thread.create timer_thread ());
-	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n"
-	      (*start_game ()*)
+	      (*timer := Some (Thread.create timer_thread ());
+	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n"*)
+	      start_game ()
 	    | 4 ->
 	      timer := None;
 	      Printf.printf "4 joueurs sont connectés, début de la partie\n";

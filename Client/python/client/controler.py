@@ -257,7 +257,7 @@ class Action(threading.Thread):
                          if dy == abs(dy):
                              action.append('U/'*dy)
                          else:
-                             action.append('D/'*abs(dx))
+                             action.append('D/'*abs(dy))
                          print "on a bougé et a vaut : "+str(a)
                          a -= abs(dx)+abs(dy)
                          x=int(but[0])
@@ -330,10 +330,14 @@ class Controler(wx.Frame):
         self.Bind(EVT_OUCH,self.ouch)
         self.Bind(EVT_REFRESH_DRONE,self.drawDrone)
         self.Bind(EVT_RM_DRONE,self.removeDrone)
-        self.Bind(wx.EVT_RIGHT_DOWN,self.onRightClick)
+        self.Bind(wx.EVT_KEY_DOWN,self.onRightClick)
         self.Bind(EVT_REFRESH_BUT,self.refreshBut)
         self.Bind(EVT_DEATH,self.death)
+        
+        self.Bind(wx.EVT_KEY_UP,self.onRightClick)
+        self.Bind(wx.EVT_CHAR,self.onRightClick)
 
+        self.viou.SetFocus()
         #self.mask = wx.Bitmap("img/mask.jpg",wx.BITMAP_TYPE_JPEG)
         #self.unmask = wx.Bitmap("img/unmask.jpg",wx.BITMAP_TYPE_JPEG)
 
@@ -362,8 +366,9 @@ class Controler(wx.Frame):
         print "bitmap OK"
 
     def onRightClick(self,e):
-        mouseRightClickEvt.set()
-        onButEvt.set()        
+        if self.count == 2 and e.GetUniChar() == ord('S'):
+            mouseRightClickEvt.set()
+            onButEvt.set()
 
     def drawDrone(self,e):
         (l,actif) = e.GetValue()
@@ -374,18 +379,21 @@ class Controler(wx.Frame):
         if actif :
             self.pos.append(x+(ord('P')-ord(y))*16)
             but = self.viou.buts[x+(ord('P')-ord(y))*16]
+            but.SetFocus()
             but.addFlag(mybuttons.RED)
             but.changeBMP()
         for i in range(-a,a+1):
             u=x+i
-            for j in range(-a,a+1):
-                v=ord(y)+j
-                d = abs(x-u)+abs(ord(y)-v)
-                if (d <> 0 and d <=a):
-                    self.pos.append(u+(ord('P')-v)*16)
-                    but = self.viou.buts[u+(ord('P')-v)*16]
-                    but.addFlag(mybuttons.GREEN)
-                    but.changeBMP()
+            if u>=0 and u <=15:
+                for j in range(-a,a+1):
+                    v=ord(y)+j
+                    if v >=ord('A') and v<=ord('P'):
+                        d = abs(x-u)+abs(ord(y)-v)
+                        if (d <> 0 and d <=a):
+                            self.pos.append(u+(ord('P')-v)*16)
+                            but = self.viou.buts[u+(ord('P')-v)*16]
+                            but.addFlag(mybuttons.GREEN)
+                            but.changeBMP()
     
     def removeDrone(self,e):
         for p in self.pos :

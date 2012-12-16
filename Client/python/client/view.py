@@ -33,6 +33,9 @@ class View(wx.Panel):
                 but = mybuttons.BitmapButton(self,wx.ID_ANY,str(j)+'/'+str(chr(ord('A')+15-i))+'/'
                                              ,wx.BORDER_NONE)
                 but.Bind(wx.EVT_BUTTON,parent.onBut)
+                but.Bind(wx.EVT_KEY_DOWN,lambda e: e.Skip())
+                but.Bind(wx.EVT_KEY_UP,lambda e: e.Skip())
+                but.Bind(wx.EVT_CHAR,lambda e: e.Skip())
                 #but.SetBitmapLabel(self.seaBmp)
                 #but.SetMargins(0,0)
                 #but = wx.StaticBitmap(self,wx.ID_ANY,self.bmp)
@@ -55,7 +58,7 @@ class View(wx.Panel):
         self.sendButton = wx.Button(self,id=wx.ID_OK)
         box.Add(self.chatEntry,proportion=1)
         box.Add(self.sendButton,proportion=1)
-
+        
         self.playerInfo = wx.lib.stattext.GenStaticText(self,wx.ID_ANY,"")
         self.playerInfo.SetLabel("Aucun Joueur pour le moment")
         
@@ -72,6 +75,9 @@ class View(wx.Panel):
         self.SetSizer(bs)
 
         self.Bind(wx.EVT_TEXT_ENTER,self.onEnter)
+        self.Bind(wx.EVT_KEY_DOWN,lambda e: e.Skip())
+        self.Bind(wx.EVT_KEY_UP,lambda e: e.Skip())
+        self.Bind(wx.EVT_CHAR,lambda e: e.Skip())
 
         self.Show()
         # self.Bind(wx.EVT_KEY_DOWN,onPressKey)    
