@@ -18,6 +18,7 @@ chatEvt = threading.Event()
 finishPutShipEvt = threading.Event()
 finishEvt = threading.Event()
 mouseRightClickEvt = threading.Event()
+resEvt = threading.Event()
 
 myEVT_UPDATE_BAR = wx.NewEventType()
 EVT_UPDATE_BAR = wx.PyEventBinder(myEVT_UPDATE_BAR, 1)
@@ -55,6 +56,12 @@ EVT_RELAUNCH = wx.PyEventBinder(myEVT_RELAUNCH,1)
 myEVT_FINISH = wx.NewEventType()
 EVT_FINISH = wx.PyEventBinder(myEVT_FINISH,1)
 
+myEVT_NEW_CLIENT = wx.NewEventType()
+EVT_NEW_CLIENT = wx.PyEventBinder(myEVT_NEW_CLIENT,1)
+
+myEVT_MAKE_DIALOG = wx.NewEventType()
+EVT_MAKE_DIALOG = wx.PyEventBinder(myEVT_MAKE_DIALOG,1)
+
 class myEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, value=None):
         wx.PyCommandEvent.__init__(self, etype, eid)
@@ -77,12 +84,12 @@ class Chat(threading.Thread):
         # self.sock.settimeout(1)
         while chatEvt.is_set():
             try :
-                print "appel du chat"
+                # print "appel du chat"
                 l = self.sock.readline()
                 # l=self.sock.recv(4096)
                 listPlayers = re.split("(?<!\\\)/",l)
                 if listPlayers[0]=="HEYLISTEN":
-                    self.sock.Ok()
+                    # self.sock.Ok()
                     print "chat : "+str(listPlayers)
                     e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
                     wx.PostEvent(self.parent,e)
@@ -111,16 +118,16 @@ class WaitPlayers(threading.Thread):
 
             if listPlayers[0]=="HEYLISTEN":
                 
-                print "waitPlayers : "+str(listPlayers)
+                # print "waitPlayers : "+str(listPlayers)
                 e = myEvent(myEVT_UPDATE_CHAT,-1,listPlayers)
                 wx.PostEvent(self.parent,e)
             else:
-                print listPlayers
+                print "ceci ne devrait pas arrivé"
             l = self.sock.readline()
             # l=self.sock.recv(4096)
             listPlayers = re.split("(?<!\\\)/",l)
         #
-        print "waitPlayers2 :" + str(listPlayers)
+        # print "waitPlayers2 :" + str(listPlayers)
         # l = self.sock.readline()
         # listPlayers = re.split("(?<!\\\)/",l)
         # print listPlayers
@@ -142,12 +149,12 @@ class PutShip(threading.Thread):
         finishWaitEvt.wait()
         # print "ici"
         # rep = self.sock.recv(4096)
-        print "appel du putship"
+        # print "appel du putship"
         rep = self.sock.readline()
         l = re.split("(?<!\\\)/",rep)
         # print l 
         while l[0] <> 'ALLYOURBASE':
-            print "putShip :"+str(l)
+            # print "putShip :"+str(l)
             if l[0] == 'SHIP':
                 
                 n = int(l[1])
@@ -164,11 +171,11 @@ class PutShip(threading.Thread):
                     onButEvt.wait()
                     onButEvt.clear()
                     pos.append(self.parent.currentBut)
-                    print pos
+                    # print pos
                 
                 #chatEvt.clear()
                 self.parent.count=0
-                #print pos
+                print "PUTSHIP/"+''.join(pos)+'\n'
                 self.sock.send('PUTSHIP/'+''.join(pos)+'\n')
                 # print "ici"
                 # rep = self.sock.recv(4096)
@@ -223,8 +230,12 @@ class Action(threading.Thread):
              if l[0] == 'OUCH':
                  e = myEvent(myEVT_OUCH, -1, l)
                  wx.PostEvent(self.parent,e)
+                 e=myEvent(myEVT_UPDATE_BAR,-1,"OUCH! Vous êtes touché")
+                 wx.PostEvent(self.parent,e)
              if l[0] == 'DEATH':
                  e = myEvent(myEVT_DEATH, -1, l)
+                 wx.PostEvent(self.parent,e)
+                 e=myEvent(myEVT_UPDATE_BAR,-1,l[1]+" est mort :'(")
                  wx.PostEvent(self.parent,e)
              if l[0] == 'YOURTURN':
                  x = int(l[1])
@@ -246,12 +257,12 @@ class Action(threading.Thread):
                      but = re.split("(?<!\\\)/",self.parent.currentBut)
                      if int(but[0]) == x and but[1] == y:
                          if actif :
-                             print "activation du laser"
+                             # print "activation du laser"
                              action.append('E/')
                              actif=False
                              a = a-1
                          else:
-                             print "passage de tour"
+                             # print "passage de tour"
                              break
                      else :
                          dx = int(but[0])-x
@@ -264,11 +275,11 @@ class Action(threading.Thread):
                              action.append('U/'*dy)
                          else:
                              action.append('D/'*abs(dy))
-                         print "on a bougé et a vaut : "+str(a)
+                         # print "on a bougé et a vaut : "+str(a)
                          a -= abs(dx)+abs(dy)
                          x=int(but[0])
                          y=but[1]
-                     print "a enfin de boucle : "+str(a)
+                     # print "a enfin de boucle : "+str(a)
                      if a<=0:
                           break
                      e=myEvent(myEVT_RM_DRONE,-1,None)
@@ -279,11 +290,13 @@ class Action(threading.Thread):
                  e=myEvent(myEVT_RM_DRONE,-1,None)
                  wx.PostEvent(self.parent,e)
                  action.append('\n')
-                 print "action:"+''.join(action)
+                 print "ACTION/"+''.join(action)
                  self.sock.send('ACTION/'+''.join(action))
                  rep = self.sock.readline()
                  l=re.split("(?<!\\\)/",rep)
                  # print l
+                 e=myEvent(myEVT_UPDATE_BAR,-1,"En attente de votre tour")
+                 wx.PostEvent(self.parent,e)
                  while l[0] == "HEYLISTEN":
                      e = myEvent(myEVT_UPDATE_CHAT,-1,l)
                      wx.PostEvent(self.parent,e)
@@ -293,8 +306,12 @@ class Action(threading.Thread):
                  if l[0] =='MISS':
                      e = myEvent(myEVT_REFRESH_BUT,-1,(but,mybuttons.MISS))
                      wx.PostEvent(self.parent,e)
+                     e=myEvent(myEVT_UPDATE_BAR,-1,"Vous avez raté")
+                     wx.PostEvent(self.parent,e)
                  elif l[0] =='TOUCHE':
                      e = myEvent(myEVT_REFRESH_BUT,-1,(but,mybuttons.TOUCHE))
+                     wx.PostEvent(self.parent,e)
+                     e=myEvent(myEVT_UPDATE_BAR,-1,"Vous avez touché")
                      wx.PostEvent(self.parent,e)
                  else:
                      continue
@@ -306,9 +323,14 @@ class Action(threading.Thread):
          if l[0] =='DRAWGAME':
              e=myEvent(myEVT_UPDATE_BAR,-1,"Il y a égalité !")
              wx.PostEvent(self.parent,e)
-         dial = wx.MessageDialog(self,"Voulez vous rejouer ?","Info",wx.YES_NO)
-         if dial.ShowModal() == wx.ID_YES:
+         e=myEvent(myEVT_MAKE_DIALOG,-1,"Voulez vous rejouer ?")
+         wx.PostEvent(self.parent,e)
+         resEvt.wait()
+         resEvt.clear()
+         res = self.parent.res
+         if res == wx.ID_YES:
              self.sock.send("PLAYAGAIN/\n")
+             print "PLAYAGAIN/\n"
              e=myEvent(myEVT_RELAUNCH,-1,"")
              wx.PostEvent(self.parent,e)
          else :
@@ -319,8 +341,9 @@ class Action(threading.Thread):
 
 class Controler(wx.Frame):
     
-    def __init__(self,sock,name):
+    def __init__(self,pere,sock,name):
         super(Controler,self).__init__(None,title="Battle Royale",size=(1200,800))
+        self.pere = pere
         self.viou = View(self)
         self.Bind(wx.EVT_BUTTON,self.onBut)
         #sock.setblocking(0)
@@ -331,7 +354,7 @@ class Controler(wx.Frame):
         self.count=0
         self.b = None
         self.pos =[]
-
+        self.res = None
         self.SetStatusBar(wx.StatusBar(self))
         self.SetStatusText("En attente du serveur")
 
@@ -353,7 +376,7 @@ class Controler(wx.Frame):
         self.Bind(wx.EVT_KEY_DOWN,self.onRightClick)
         self.Bind(EVT_REFRESH_BUT,self.refreshBut)
         self.Bind(EVT_DEATH,self.death)
-        
+        self.Bind(EVT_MAKE_DIALOG,self.makedialog)
         self.Bind(wx.EVT_KEY_UP,self.onRightClick)
         self.Bind(wx.EVT_CHAR,self.onRightClick)
 
@@ -379,20 +402,33 @@ class Controler(wx.Frame):
         a = Action(self,self.sock)
         a.start()
     
+    def makedialog(self,e):
+        dial = wx.MessageDialog(self,e.GetValue(),"Info",wx.YES_NO)
+        self.res = dial.ShowModal()
+        resEvt.set()
+
     def relaunch(self,e):
-        t = threading.Thread(target=self.__init__,args=(self.sock,self.name))
-        t.start()
-        self.Destroy()
+        e = myEvent(myEVT_NEW_CLIENT,-1,"")
+        wx.PostEvent(self.pere,e)
 
     def death(self,e):
-        pass
+        pd = (e.GetValue())[1]
+        l=[]
+        for p in self.players:
+            if p == pd:
+                l.append(p+" (RIP)\n")
+            else:
+                l.append(p+"\n")
+        self.viou.playerInfo.SetLabel(''.join(l))
+             
+                
 
     def refreshBut(self,e):
         (but,flag)=e.GetValue()
         but.addFlag(flag)
-        print "flag : "+str(but.flag)
+        # print "flag : "+str(but.flag)
         but.changeBMP()
-        print "bitmap OK"
+        # print "bitmap OK"
 
     def onRightClick(self,e):
         if self.count == 2 and e.GetUniChar() == ord('S'):
@@ -480,7 +516,7 @@ class Controler(wx.Frame):
         for name in pos:
             l = re.split("(?<!\\\)/",name)
             # print l
-            print int(l[0])+(ord('P')-ord(l[1]))*16
+            # print int(l[0])+(ord('P')-ord(l[1]))*16
             but = self.viou.buts[int(l[0])+(ord('P')-ord(l[1]))*16]
             but.changeFlag(mybuttons.SEA)
             but.changeBMP()
@@ -492,7 +528,7 @@ class Controler(wx.Frame):
 
     def refreshChat(self,e):
         l = e.GetValue()
-        print "refreshChat"+str(l)
+        # print "refreshChat"+str(l)
         self.viou.chatAll.AppendText(l[1]+" : "+l[2]+"\n")
 
 if __name__ == '__main__':

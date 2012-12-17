@@ -13,7 +13,7 @@ import os
 class View(wx.Panel):
     def __init__(self,parent):
         super(View, self).__init__(parent)
-        print os.getcwd()
+        # print os.getcwd()
         #self.seaBmp = wx.Bitmap("img/sea.jpg",wx.BITMAP_TYPE_JPEG)
         #self.subBmp =  wx.Bitmap("img/submarin.jpeg",wx.BITMAP_TYPE_JPEG)
         self.buts = []

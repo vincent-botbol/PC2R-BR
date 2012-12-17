@@ -1,8 +1,5 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-import view
 import controler
+import view
 
 View = view.View
 Controler = controler.Controler

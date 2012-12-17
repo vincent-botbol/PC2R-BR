@@ -50,7 +50,7 @@ class View(wx.Panel):
         event.Skip()
 
     def onConnect(self,event):
-        self.buttonEnter.SetValue(True)
+        #self.buttonEnter.SetValue(True)
         self.buttonEnter.Disable()
         event.Skip()
         #self.Close()

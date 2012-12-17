@@ -12,7 +12,7 @@ View = view.View
 class Controler(wx.Frame):
     
     def __init__(self,parent):
-        super(Controler,self).__init__(None,wx.ID_ANY,"connection",size=(250,150))
+        super(Controler,self).__init__(None,wx.ID_ANY,"connection",size=(300,200))
         self.name=None
         self.address = None
         self.sock = mysocket.Socket(mysocket.AF_INET,mysocket.SOCK_STREAM)
@@ -45,6 +45,10 @@ class Controler(wx.Frame):
             # print self.sock.recv(4096)
         except:
             # print e.strerror
+            dial = wx.MessageDialog(self,
+                                    "Erreur de connection, le serveur est il lancé ?"
+                                    ,"Error",wx.CANCEL)
+            dial.ShowModal()
             self.sock.shutdown(mysocket.SHUT_RDWR)
             self.sock.close()
             self.viou.buttonEnter.SetValue(False)

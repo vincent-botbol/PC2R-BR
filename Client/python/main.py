@@ -12,12 +12,15 @@ class  Main(wx.App):
     
     def OnInit(self):
         self.con = connection.Controler(self)
+        self.SetTopWindow(self.con)
         self.sock = None
         self.name = None
         self.Bind(wx.EVT_TOGGLEBUTTON, self.onConnect,source=self.con.viou.buttonEnter)
         self.Bind(wx.EVT_BUTTON, self.onQuit,source=self.con.viou.buttonQuit)
         self.Bind(wx.EVT_CLOSE,self.onQuit)
+        self.Bind(client.controler.EVT_NEW_CLIENT,self.newClient)
         # self.cli = client.Controler()
+        self.client = None
         return True
 
     def onConnect(self,e):
@@ -26,23 +29,32 @@ class  Main(wx.App):
         self.serVaddress = self.con.address
         rep = self.sock.readline()# self.sock.readline().next()
         l = re.split("(?<!\\\)/",rep)
-        print "main : "+str(l)
+
+        if l[0] == 'ACCESSDENIED':
+            dial = wx.MessageDialog(self.con,"Vous vous êtes trompé(e) de mot de passe ou vous n'êtes pas inscit(e)"
+                                    ,"Error",wx.CANCEL)
+            dial.ShowModal()
+            
+            self.con.Destroy()
+            self.con = connection.Controler(self)
+            self.Bind(wx.EVT_TOGGLEBUTTON, self.onConnect,source=self.con.viou.buttonEnter)
+            self.Bind(wx.EVT_BUTTON, self.onQuit,source=self.con.viou.buttonQuit)
+
         if l[0]=='WELCOME':
             self.name = l[1]
-            # print self.name
-            print "ok"
             self.con.Destroy()
-            client.Controler(self.sock,self.name)
-        elif l[0] == 'ACCESSDENIED':
-            print "ah merde"
-            print rep
-            print self.name
-        else:
-            print "ah merde"
-            print rep
-            print self.name
+            self.client = client.Controler(self,self.sock,self.name)
+            self.SetTopWindow(self.client)
+        
+        
+
+    def newClient(self,e):
+        self.client.Destroy()
+        self.client = client.Controler(self,self.sock,self.name)
+        self.SetTopWindow(self.client)
 
     def onQuit(self,event):
+        # print "ici"
         self.ExitMainLoop()
 
 if __name__ == '__main__':
