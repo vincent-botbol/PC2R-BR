@@ -15,9 +15,11 @@ public class Response extends Command<EResponse> {
 		// on récupère une liste de chaines pouvant contenir des / et des \
 		// il faut les sécuriser
 		for (int i = 0; i < arguments.size(); i++) {
-			arguments.set(i, arguments.get(i).replaceAll("\\\\\\\\", "\\\\")
-					.replaceAll("\\\\/", "/"));
+			arguments.set(i,
+					arguments.get(i).replace("\\\\", "\\").replace("\\/", "/"));
 		}
+
 		return arguments;
 	}
+
 }
