@@ -523,12 +523,18 @@ class Controler(wx.Frame):
 
     def onEnter(self,e):
         mes = self.viou.chatEntry.GetValue()
+        mes = re.sub(r'\\',r'\\\\',mes)
+        mes = re.sub('/','\/',mes)
         self.viou.chatEntry.SetValue("")
         self.sock.send("TALK/"+mes+"/\n")
 
     def refreshChat(self,e):
         l = e.GetValue()
         # print "refreshChat"+str(l)
+        l[1] = re.sub('\\\/','/',l[1])
+        l[2] = re.sub('\\\/','/',l[2])
+        l[1] = re.sub('\\\\\\\\','\\\\',l[1])
+        l[2] = re.sub('\\\\\\\\','\\\\',l[2])
         self.viou.chatAll.AppendText(l[1]+" : "+l[2]+"\n")
 
 if __name__ == '__main__':
