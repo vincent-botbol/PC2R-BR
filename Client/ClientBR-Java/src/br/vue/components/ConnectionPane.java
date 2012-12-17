@@ -34,7 +34,7 @@ public class ConnectionPane extends JPanel {
 
 		setLayout(new GridBagLayout());
 
-		server = new JTextField("localhost", 20);
+		server = new JTextField("132.227.112.234", 20);
 		server_label.setLabelFor(server);
 
 		login = new JTextField("Test", 20);

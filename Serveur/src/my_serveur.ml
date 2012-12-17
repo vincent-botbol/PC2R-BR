@@ -6,6 +6,7 @@ type phase =
   | YOURTURN
   | WAITING
   | DEAD
+  | ENDED
 
 type etat = Alive | Dead
 
@@ -65,6 +66,8 @@ module RegExp =
     let reg_exists = regexp "^\\([^/]+\\)/\\([^/]+\\)$"
     let reg_bye = regexp (Printf.sprintf "^BYE/%c?$" (char_of_int 13))
     let reg_playagain = regexp (Printf.sprintf "^PLAYAGAIN/%c?$" (char_of_int 13))
+    let reg_sep = regexp "[^\\]/"
+    let reg_escape = regexp "\\\\[\\/]"
   end
 
 
@@ -94,11 +97,38 @@ module Utils =
 
     let names () = List.fold_left (fun acc c-> "/"^c.nom^acc) "" !clients
 
-    let unescape str = Scanf.sscanf ("\"" ^ str "\"") "%S%!" (fun u -> u)
+    let unescape str =
+      let i = ref 0 in
+      let res = ref "" in
+      begin
+      if str <> "" then
+	try
+	  while !i < String.length str do
+	    let j = Str.search_forward RegExp.reg_escape str !i in
+	    Printf.printf "TRACE :found\n%!";
+	    res := !res ^ (String.sub str !i (j-(!i))) ^ (String.make 1 str.[j+1]);
+	    i := j+2
+	  done
+	with
+	  | Not_found -> res := !res ^ (String.sub str !i (String.length str - !i))
+      end;
+      !res
 
-    let my_split regexp string =
+    let my_split str =
       let res = ref [] in
-      ()
+      let i = ref 0 in
+      begin
+	if str <> "" && str <> "/" then
+	  try
+	    while !i < String.length str do
+	      let j = Str.search_forward RegExp.reg_sep str !i in
+		res := (String.sub str !i (j-(!i)+1))::!res;
+		i:=j+2
+	    done
+	  with
+	    | Not_found -> res := (String.sub str !i ((String.length str) - (!i+1)))::!res
+      end;
+      List.rev !res
       
     let my_input_line  fd = 
       let s = " "  and  r = ref "" 
@@ -106,8 +136,8 @@ module Utils =
       !r
 	
     let my_output_line fd str =
-      if !trace_flag then Printf.printf "TRACE : command send : %s\n%!" str;
-      ignore (ThreadUnix.write fd str 0 (String.length str))
+      ignore (ThreadUnix.write fd str 0 (String.length str));
+      if !trace_flag then Printf.printf "TRACE : command send : %s\n%!" str
 	
     (* adresse localhost : 1270.1.1 *)
     let get_my_addr () =
@@ -188,10 +218,18 @@ module Utils =
     let clean_map player =
       Array.iteri (fun i -> Array.iteri (fun j _ -> map.(i).(j) <- List.filter ((<>) player) map.(i).(j))) map
 
+    let clean_all_map () =
+      Array.iteri (fun i -> Array.iteri (fun j _ -> map.(i).(j) <- [])) map
+
     let reset_client c =
       c.phase <- WAITING;
       c.bateaux <- [];
       c.drone <- random_drone ()
+
+    let position_in_client_list c =
+      let cpt = ref 0  and indice = ref 0 in
+	List.iter (fun cl -> if cl == c then indice := !cpt; incr cpt) !clients;
+	!indice
 
   end
 
@@ -207,22 +245,22 @@ module Next =
 
     let rec next () =
       let current = List.nth !clients !cpt in
-      if current.phase = YOURTURN then
-	current.phase <- WAITING;
-      cpt := (!cpt + 1) mod (List.length !clients);
-      let suiv = List.nth !clients !cpt in
-      if suiv.phase = WAITING then
-	begin
-	  suiv.phase <- YOURTURN;
-	  my_output_line suiv.chan
-	    (Printf.sprintf "YOURTURN/%d/%c/%d/\n%!"
-	       (fst suiv.drone)
-	       (char_of_int ((snd suiv.drone) + 65))
-	       (Utils.nb_coups suiv.bateaux)
-	    )
-	end
-      else
-	next ()
+	if current.phase = YOURTURN then
+	  current.phase <- WAITING;
+	cpt := (!cpt + 1) mod (List.length !clients);
+	let suiv = List.nth !clients !cpt in
+	  if suiv.phase = WAITING then
+	    begin
+	      suiv.phase <- YOURTURN;
+	      my_output_line suiv.chan
+		(Printf.sprintf "YOURTURN/%d/%c/%d/\n%!"
+		   (fst suiv.drone)
+		   (char_of_int ((snd suiv.drone) + 65))
+		   (Utils.nb_coups suiv.bateaux)
+		)
+	    end
+	  else if suiv.phase <> ENDED then
+	    next ()
       
 
 
@@ -243,29 +281,29 @@ struct
     let check_connect name = 
       if !trace_flag then Printf.printf "TRACE : checking login %s\n%!" name;
       let chan = open_in "logins.txt" in
-      try
-	let cont = ref true in
-	while !cont do
-	  let ligne = Str.split (regexp "/") (input_line chan) in
-	  assert ((List.length ligne) = 2);
-	  if (List.hd ligne) = name then cont := false
-	done;
-	if !trace_flag then Printf.printf "TRACE : Login %s is already used\n%!" name;
-	!cont
-      with
-	| End_of_file ->
-	  if !trace_flag then Printf.printf "TRACE : Login %s is available\n%!" name;true
-	| Assert_failure _ ->
-	  if !trace_flag then Printf.printf "TRACE.exn -> malformed logins file\n%!"; false
+	try
+	  let cont = ref true in
+	    while !cont do
+	      let ligne = my_split (input_line chan) in
+		assert ((List.length ligne) = 2);
+		if (List.hd ligne) = name then cont := false
+	    done;
+	    if !trace_flag then Printf.printf "TRACE : Login %s is already used\n%!" name;
+	    !cont
+	with
+	  | End_of_file ->
+	      if !trace_flag then Printf.printf "TRACE : Login %s is available\n%!" name;true
+	  | Assert_failure _ ->
+	      if !trace_flag then Printf.printf "TRACE.exn -> malformed logins file\n%!"; false
 
     let check_login name pswd =
       if !trace_flag then Printf.printf "TRACE : checking login %s with pswd %s\n%!" name pswd;
       let chan = open_in "logins.txt" in
-      try
-	while input_line chan <> (name^"/"^pswd) do () done;
-	true
-      with
-	| End_of_file -> false
+	try
+	  while input_line chan <> (name^"/"^pswd) do () done;
+	  true
+	with
+	  | End_of_file -> false
 
     let add name pswd =
       let chan = open_out_gen [Open_append] 0 "logins.txt" in
@@ -284,19 +322,24 @@ module Stop =
     
     let stop_thread_client ?(timer:Thread.t option ref=ref None) s_descr = 
       if !trace_flag then Printf.printf "TRACE : Fin d'un thread client\n%!";
-      Unix.close s_descr;
-      clients := List.filter (fun c -> c.chan <> s_descr) !clients;
       let name = try (Utils.client_from_fd s_descr).nom with Failure "searching for inexistant client" -> "" in
-      clean_map name;
-      if List.length !clients = 1 then
-	begin
-	  List.iter Utils.reset_client !clients;
-	  match !timer with
-	    |  Some _ -> timer := None
-	    | _ -> ()
-	end;
-      Thread.exit ()
-	
+	clients := List.filter (fun c -> c.chan <> s_descr) !clients;
+	Unix.close s_descr;
+	clean_map name;
+	if List.length !clients < 2 then
+	  begin
+	    List.iter Utils.reset_client !clients;
+	    match !timer with
+	      |  Some _ -> timer := None
+	      | _ -> ()
+	  end;
+	Thread.exit ()
+
+    let stop_thread_spectator s_descr =
+      if !trace_flag then Printf.printf "TRACE : Fin d'un thread spectateur\n%!";
+      Unix.close s_descr;
+      spectators := List.filter ((<>) s_descr) !spectators;
+      Thread.exit()
   end
 
 
@@ -358,9 +401,9 @@ struct
 	  Mutex.unlock clients_mutex;
 	  match (nb_state WAITING) with
 	    | 2 -> 
-	      (*timer := Some (Thread.create timer_thread ());
-	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n"*)
-	      start_game ()
+	      timer := Some (Thread.create timer_thread ());
+	      Printf.printf "2 joueurs sont connectés, lancement d'un timer de 30 secondes\n"
+	      (*start_game ()*)
 	    | 4 ->
 	      timer := None;
 	      Printf.printf "4 joueurs sont connectés, début de la partie\n";
@@ -374,7 +417,49 @@ struct
 
     let connexion_client s_descr =
       let exit_value = ref 0 in
-      let reg = RegExp.regex_conn in
+      while !exit_value = 0 do
+	try
+  	  let commande_recue = my_input_line s_descr in
+  	  if !trace_flag then Printf.printf "\nTRACE : commande reçue = %s\n%!" commande_recue;
+  	  let new_cmd = (*split (regexp "/")*) my_split commande_recue in
+  	  if !trace_flag then Printf.printf "TRACE : new command formed = %a\n%!" print_liste2 new_cmd;
+  	  match new_cmd with
+  	    | "CONNECT"::login::_ ->
+  	      treat_connexion (unescape login) s_descr;
+  	      exit_value := 1
+  	    | "LOGIN"::login::pswd::_ ->
+	      (*let nom = unescape login and pass = unescape pswd in*)
+  	      if Register.check_login login pswd then
+  		begin
+  		  if !trace_flag then
+  		    Printf.printf "TRACE : correct login (%s) and password (%s)\n%!" login pswd;
+  		  treat_connexion ~login:true login s_descr;
+  		  exit_value := 1
+  		end
+  	      else
+  		raise Access_denied
+  	    | "REGISTER"::login::pswd::_ ->
+	      (*let nom = unescape login and pass = unescape pswd in*)
+  	      if Register.check_connect login then
+  		begin
+  		  treat_connexion ~login:true login s_descr;
+  		  Register.add login pswd;
+  		  if !trace_flag then
+  		    Printf.printf "TRACE : login %s added with password %s\n%!" login pswd;
+  		  exit_value := 1
+  		end
+  	      else
+  		raise Access_denied
+  	    | "SPECTATOR"::_ ->
+  	      exit_value := 2
+	    | _ -> raise Access_denied
+	with
+	  | Access_denied ->
+	    my_output_line s_descr (Printf.sprintf "ACCESSDENIED/\n%!");
+  	    Stop.stop_thread_client ~timer:timer s_descr
+      done;
+      !exit_value
+      (*let reg = RegExp.regex_conn in
       while !exit_value = 0 do
 	try
 	  let commande_recue = my_input_line s_descr in
@@ -420,7 +505,7 @@ struct
 	    Stop.stop_thread_client ~timer:timer s_descr
       done;
       !exit_value
-
+      *)
   end
 
 
@@ -507,35 +592,17 @@ module Placement =
 module End_of_game =
   struct
 
-    
-
     let timer_thread () =
       Unix.sleep 30;
-      List.iter (fun c -> if c.phase = DEAD then Stop.stop_thread_client c.chan)
+      List.iter (fun c -> if c.phase = ENDED then Stop.stop_thread_client c.chan) !clients
     
-    let end_game client =
-      let cont = ref true in
-      while !cont do
-	let cmd = my_input_line client.chan in
-	if !trace_flag then Printf.printf "\nTRACE : command received : %s\n%!" cmd;
-	if string_match RegExp.reg_bye cmd 0 then
-	  begin
-	    if !trace_flag then Printf.printf "TRACE : player %s wants to leave\n%!" client.nom;
-	    cont := false;
-	    Stop.stop_thread_client client.chan
-	  end
-	else if string_match RegExp.reg_playagain cmd 0 then
-	  begin
-	    if !trace_flag then Printf.printf "TRACE : player %s wants to play again\n%!" client.nom;
-	    cont := false;
-	    reset_client client;
-	    match nb_state WAITING with
-	      | 2 -> Connexion.timer := Some (Thread.create Connexion.timer_thread ())
-	      | 4 -> Connexion.timer := None; Connexion.start_game ()
-	      | _ -> ()
-	  end
-      done
-	    
+    let end_game () =
+      Printf.printf "TRACE : end of game requested\n%!";
+      List.iter (fun c -> c.phase <- ENDED) !clients;
+      ignore (Thread.create timer_thread ());
+      clean_all_map ();
+      Next.cpt := 0;
+      Printf.printf "TRACE : end of game treated\n%!"
 	  
 
   end 
@@ -610,9 +677,9 @@ module Game =
 	    match !game_over with
 	      | [] -> raise Uncorrect_action
 	      | [_] ->
-		send_to_all (Printf.sprintf "AWINNERIS/%s/\n" (List.find (fun c -> c.phase <> DEAD) !clients).nom);
-		List.iter End_of_game.end_game !clients;
-	      | _ -> send_to_all "DRAWGAME/\n"; List.iter End_of_game.end_game !clients
+		  send_to_all (Printf.sprintf "AWINNERIS/%s/\n" (List.find (fun c -> c.phase <> DEAD) !clients).nom);
+		  End_of_game.end_game ();
+	      | _ -> send_to_all "DRAWGAME/\n";End_of_game.end_game ()
 	    
     
 
@@ -655,7 +722,7 @@ let rec main_joueur s_descr =
   while true do
     let commande_recue = my_input_line client.chan in
     if !trace_flag then Printf.printf "\nTRACE : commande reçue = %s\n%!" commande_recue;
-    let new_cmd = split (regexp "/") commande_recue in
+    let new_cmd = (*split (regexp "/")*) my_split commande_recue in
     if !trace_flag then Printf.printf "TRACE : new command formed = %a\n%!" print_liste2 new_cmd;
     match client.phase, new_cmd with
       | _, "TALK"::msg::_ ->
@@ -680,9 +747,10 @@ let rec main_joueur s_descr =
 		client.phase <- WAITING;
 		(*add_cmd ("PLAYERSHIP"::client.nom::placements);*)
 		my_output_line client.chan (Printf.sprintf "ALLYOURBASE/\n%!");
-		if List.for_all (fun c -> c.phase = WAITING) !clients then
-		  Next.next ()
-	      (* check si c'est le last *)
+		match nb_state WAITING with
+		    (* + 5 pour choper le précédent, et ne pas avoir une valeur negative *)
+		  | 1 -> Next.cpt := ((position_in_client_list client) + 5) mod (List.length !clients)
+		  | n -> if n = List.length !clients then Next.next()
 	      end
 	    else if !trace_flag then
 	      Printf.printf "TRACE.exn : pas cool\n%!"
@@ -716,11 +784,23 @@ let rec main_joueur s_descr =
 	end;
 	Next.next();
 	Mutex.unlock clients_mutex
+      | ENDED, "BYE"::_ ->
+	if !trace_flag then Printf.printf "TRACE : Bye to you %s !\n%!" client.nom;
+	Stop.stop_thread_client ~timer:Connexion.timer s_descr
+      | ENDED, "PLAYAGAIN"::_ ->
+	begin
+	  reset_client client;
+	  match nb_state WAITING with
+	    | 2 -> Connexion.timer := Some (Thread.create Connexion.timer_thread ())
+	    | 4 -> Connexion.timer := None; Connexion.start_game ()
+	    | _ -> ()
+	end
       | _, [] ->
 	if !trace_flag then Printf.printf "TRACE.exn : maxi relou command incoming\n%!";
 	Stop.stop_thread_client ~timer:Connexion.timer s_descr
       | _ -> (*my_output_line s_descr "UNKNOWNCOMMAND\n%!"*)
 	if !trace_flag then Printf.printf "TRACE.exn : unknown command\n%!"
+	  
   done
   
 	  
@@ -732,12 +812,14 @@ let main_spectator s_descr =
   Mutex.unlock cmd_mutex;
   while true do
     let cmd_recue = my_input_line s_descr in
-    if !trace_flag then Printf.printf "\nTRACE : commande reçue = %s\n%!" cmd_recue;
-    let new_cmd = split (regexp "/") cmd_recue in
-    match new_cmd with
-      | "TALK"::msg::_ ->
-	send_to_all (Printf.sprintf "HEYLISTEN/(spectateur)/%s/\n" msg)
-      | _ -> () (* pas le droit boloss *)
+      if !trace_flag then Printf.printf "\nTRACE : commande reçue = %s\n%!" cmd_recue;
+      let new_cmd = my_split cmd_recue in
+	if !trace_flag then Printf.printf "TRACE : new command formed = %a\n%!" print_liste2 new_cmd;
+	match new_cmd with
+	  | "TALK"::msg::_ ->
+	      send_to_all (Printf.sprintf "HEYLISTEN/(spectateur)/%s/\n" msg)
+	  | [] -> Stop.stop_thread_spectator s_descr
+	  | _ -> () (* pas le droit boloss *)
   done
 	
 let main_client s_descr =
@@ -784,7 +866,7 @@ class connexion (sd,sa) =
      method stop() = 
        if !trace_flag then Printf.printf "TRACE.connexion : fin objet traitant %d\n" numero ;
        print_newline () ;
-       Stop.stop_thread_client s_descr
+       Stop.stop_thread_client ~timer:Connexion.timer s_descr
 	 
      method run () = 
        try 
