@@ -1,0 +1,47 @@
+\documentclass[a4paper, 11pt]{report}
+
+\addtolength{\hoffset}{-1cm}
+\addtolength{\textwidth}{2cm}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+
+
+\begin{document}
+
+\chapter{Client Python - Matthieu Dien}
+
+\section{Choix Techniques}
+
+Pour ce client, le choix du langage d'implémentation a été Python car c'est un langage haut niveau, simple, 
+avec une librairie satndard très fournie et pour une majorité de librairie graphique implémente
+un binding. La librairie graphique choisie est wxPython, s'appuyant sur wxWidgets (écrite en C++), disponible 
+sur la plupart des plateformes.
+Ce choix a été fait pour simplifier la conception de l'interface graphique, wxPython étant simple d'utilisation et 
+très complète par les widgets qu'elles proposent. Ce choix Python/wxPython garantit la portabilité du client.
+
+\section{Implémentation}
+
+Le client se présente sous la forme d'un fichier \emph{main.py}, de deux dossiers 
+\emph{connection} et \emph{client}, ainsi que de deux fichiers
+\emph{mybuttons.py} et \emph{mysocket.py}.
+
+\subsection{Socket}
+Dans \emph{mysocket.py} on trouve la fonction \emph{readline} 
+qui permet la lecture sur socket. Cette fonction utilise le mécanisme de ``generator'' python pour retourner ligne par ligne 
+les lectures faites sur le socket. C'est une petite surcouche au socket fourni par la librairie standard python qui ne permettait pas cette 
+lecture ligne à ligne.
+
+\subsection{Bouton}
+Dans \emph{mybuttons.py} on trouve une surcouche au ``BitmapButton'' qui permet la gestion des différents types de 
+case que l'on peut rencontrer durant la partie en utilisant un système de ``flag'' binaire pour pouvoir ajouter facilement des caractéristiques aux cases.
+Par exemple, une case peut être avec un sous-marin, touché et rouge (car sous le drône).
+
+\subsection{Client}
+Le principal du code se trouve dans le dossier \emph{client}, notamment dans le fichier \emph{controler.py}.
+On y trouve une classe prinicpale \emph{Controler} qui gère l'interface graphique (UI) et procède à tous les traitements graphiques ainsi que trois autres classes : 
+\emph{WaitPlayers}, \emph{PutShip} et \emph{Action}. Chacune de ces classes hérite de \emph{threading.Thread}, équivalent Java de 
+\emph{Thread}, ce qui permet de ne pas bloquer l'UI lors de l'attente d'événements tels que la réponse du serveur ou l'appui d'un bouton. 
+
+
