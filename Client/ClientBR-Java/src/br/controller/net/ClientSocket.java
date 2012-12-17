@@ -64,12 +64,10 @@ public class ClientSocket {
 	}
 
 	private static Response parseResponse(String s) throws ParseException {
-
 		String[] command = s.split("(?<!\\\\)/");
 		List<String> list = new ArrayList<>();
 		for (int i = 1; i < command.length; i++)
 			list.add(command[i]);
-
 		return new Response(command[0], list);
 	}
 

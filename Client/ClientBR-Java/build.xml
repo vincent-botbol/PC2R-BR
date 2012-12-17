@@ -52,9 +52,4 @@
             <classpath refid="ClientBR-Java.classpath"/>
         </java>
     </target>
-    <target name="TestGraphics">
-        <java classname="br.run.TestGraphics" failonerror="true" fork="yes">
-            <classpath refid="ClientBR-Java.classpath"/>
-        </java>
-    </target>
 </project>
