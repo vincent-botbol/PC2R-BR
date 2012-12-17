@@ -318,7 +318,7 @@ class Action(threading.Thread):
              rep = self.sock.readline()
              l = re.split("(?<!\\\)/",rep)
          if l[0] =='AWINNERIS':
-             e=myEvent(myEVT_UPDATE_BAR,-1,"Le gagnat est : "+l[1]+" !")
+             e=myEvent(myEVT_UPDATE_BAR,-1,"Le gagnant est : "+l[1]+" !")
              wx.PostEvent(self.parent,e)
          if l[0] =='DRAWGAME':
              e=myEvent(myEVT_UPDATE_BAR,-1,"Il y a égalité !")
