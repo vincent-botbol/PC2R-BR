@@ -16,6 +16,7 @@ class  Main(wx.App):
         self.name = None
         self.Bind(wx.EVT_TOGGLEBUTTON, self.onConnect,source=self.con.viou.buttonEnter)
         self.Bind(wx.EVT_BUTTON, self.onQuit,source=self.con.viou.buttonQuit)
+        self.Bind(wx.EVT_CLOSE,self.onQuit)
         # self.cli = client.Controler()
         return True
 

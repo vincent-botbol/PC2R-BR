@@ -31,7 +31,7 @@ class View(wx.Panel):
             gs.Add(st,proportion=1,flag=wx.ALIGN_CENTRE)
             for j in range(16):
                 but = mybuttons.BitmapButton(self,wx.ID_ANY,str(j)+'/'+str(chr(ord('A')+15-i))+'/'
-                                             ,wx.BORDER_NONE)
+                                             ,wx.NO_BORDER|wx.BU_EXACTFIT)
                 but.Bind(wx.EVT_BUTTON,parent.onBut)
                 but.Bind(wx.EVT_KEY_DOWN,lambda e: e.Skip())
                 but.Bind(wx.EVT_KEY_UP,lambda e: e.Skip())

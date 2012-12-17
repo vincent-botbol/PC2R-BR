@@ -49,6 +49,12 @@ EVT_RM_DRONE = wx.PyEventBinder(myEVT_RM_DRONE,1)
 myEVT_REFRESH_BUT = wx.NewEventType()
 EVT_REFRESH_BUT = wx.PyEventBinder(myEVT_REFRESH_BUT,1)
 
+myEVT_RELAUNCH = wx.NewEventType()
+EVT_RELAUNCH = wx.PyEventBinder(myEVT_RELAUNCH,1)
+
+myEVT_FINISH = wx.NewEventType()
+EVT_FINISH = wx.PyEventBinder(myEVT_FINISH,1)
+
 class myEvent(wx.PyCommandEvent):
     def __init__(self, etype, eid, value=None):
         wx.PyCommandEvent.__init__(self, etype, eid)
@@ -292,15 +298,29 @@ class Action(threading.Thread):
                      wx.PostEvent(self.parent,e)
                  else:
                      continue
-             print "et c'est reparti"
              rep = self.sock.readline()
              l = re.split("(?<!\\\)/",rep)
+         if l[0] =='AWINNERIS':
+             e=myEvent(myEVT_UPDATE_BAR,-1,"Le gagnat est : "+l[1]+" !")
+             wx.PostEvent(self.parent,e)
+         if l[0] =='DRAWGAME':
+             e=myEvent(myEVT_UPDATE_BAR,-1,"Il y a égalité !")
+             wx.PostEvent(self.parent,e)
+         dial = wx.MessageDialog(self,"Voulez vous rejouer ?","Info",wx.YES_NO)
+         if dial.ShowModal() == wx.ID_YES:
+             self.sock.send("PLAYAGAIN/\n")
+             e=myEvent(myEVT_RELAUNCH,-1,"")
+             wx.PostEvent(self.parent,e)
+         else :
+             self.sock.send("BYE/\n")
+             e=myEvent(myEVT_FINISH,-1,"")
+             wx.PostEvent(self.parent,e)
                  
 
 class Controler(wx.Frame):
     
     def __init__(self,sock,name):
-        super(Controler,self).__init__(None,title="Battle Royale",size=(800,600))
+        super(Controler,self).__init__(None,title="Battle Royale",size=(1200,800))
         self.viou = View(self)
         self.Bind(wx.EVT_BUTTON,self.onBut)
         #sock.setblocking(0)
@@ -337,6 +357,10 @@ class Controler(wx.Frame):
         self.Bind(wx.EVT_KEY_UP,self.onRightClick)
         self.Bind(wx.EVT_CHAR,self.onRightClick)
 
+        self.Bind(EVT_FINISH,lambda e: e.Destroy())
+        self.Bind(EVT_RELAUNCH,self.relaunch)
+        self.Bind(wx.EVT_CLOSE,lambda e: e.Skip())
+
         self.viou.SetFocus()
         #self.mask = wx.Bitmap("img/mask.jpg",wx.BITMAP_TYPE_JPEG)
         #self.unmask = wx.Bitmap("img/unmask.jpg",wx.BITMAP_TYPE_JPEG)
@@ -355,6 +379,11 @@ class Controler(wx.Frame):
         a = Action(self,self.sock)
         a.start()
     
+    def relaunch(self,e):
+        t = threading.Thread(target=self.__init__,args=(self.sock,self.name))
+        t.start()
+        self.Destroy()
+
     def death(self,e):
         pass
 

@@ -12,7 +12,7 @@ View = view.View
 class Controler(wx.Frame):
     
     def __init__(self,parent):
-        super(Controler,self).__init__(None,wx.ID_ANY,"connection")
+        super(Controler,self).__init__(None,wx.ID_ANY,"connection",size=(250,150))
         self.name=None
         self.address = None
         self.sock = mysocket.Socket(mysocket.AF_INET,mysocket.SOCK_STREAM)
@@ -33,7 +33,15 @@ class Controler(wx.Frame):
         try :
             self.address = mysocket.gethostbyname(self.address)
             self.sock.connect((self.address,2012))
-            self.sock.send("CONNECT/"+self.name+"/\n")
+            mdp = self.viou.registerEntry.GetValue()
+            if mdp <> "":
+                dial=wx.MessageDialog(self,"Etes vous déjà inscrit(e) ?","Info",wx.YES_NO)
+                if dial.ShowModal() == wx.ID_YES:
+                    self.sock.send("LOGIN/"+self.name+"/"+mdp+"/\n")
+                else:
+                    self.sock.send("REGISTER/"+self.name+"/"+mdp+"/\n")
+            else :
+                self.sock.send("CONNECT/"+self.name+"/\n")
             # print self.sock.recv(4096)
         except:
             # print e.strerror
