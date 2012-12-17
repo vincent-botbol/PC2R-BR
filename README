@@ -1,0 +1,15 @@
+PC2R-BR
+=======
+
+Projet PC2R
+
+Auteurs :
+	Serveur - Mathieu Chailloux - 2900332 (OCaml)
+	Client #1 - Vincent Botbol - 2900741 (Java)
+	Client #2 - Matthieu Dien - 2901294 (Python)
+
+Extensions réalisées :
+- Discussion instantanée -> OK
+- Comptes Utilisateurs -> OK
+- Spectateurs -> Java seulement
+- Serveur statistiques -> Non implémenté
