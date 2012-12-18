@@ -15,27 +15,27 @@
 \section{Choix Techniques}
 
 Pour ce client, le choix du langage d'implémentation a été Python car c'est un langage haut niveau, simple, 
-avec une librairie satndard très fournie et dont une majorité de librairie graphique implémente
+avec une librairie standard très fournie et dont une majorité de librairie graphique implémente
 un binding pour lui. La librairie graphique choisie est wxPython, s'appuyant sur wxWidgets (écrite en C++), elle est libre, portable 
 (disponible à l'ARI), complète (nombreux widgets) et simple d'utilisation.
 Ce choix Python/wxPython garantit la portabilité du client et facilite un peu sa conception.
 
 \section{Manuel d'utilisation}
 \subsection{Connection}
-La connection se fait en entrant l'adresse du serveur ainsi que son pseudo. Dnas le cas où vous choisiriez un mot de passe le client 
+La connection se fait en entrant l'adresse du serveur ainsi que son pseudo. Dans le cas où vous choisiriez un mot de passe le client 
 vous demandera si vous êtes déjà inscrit, si non il le fait pour vous (en envoyant ``REGISTER/'' à la place de ``LOGIN/''). Dans le cas où vous seriez déjà 
-inscrit ou que vous vous sauriez tromper de mot de passe, le serveur vous refoulera et vous devrez réessayer.
+inscrit ou que vous vous seriez trompé de mot de passe, le serveur vous refoulera et vous devrez réessayer.
 
 \subsection{Placement des bateaux}
 Le placement des bateaux se fait en cliquant sur les cases que vous voulez. Si vous vous trompez, le serveur vous demandera de réessayer.
 
 \subsection{Phase de jeu}
 Vous devez attendre votre tour pour vous déplacer. Vous ne pouvez vous déplacer que sur les cases surbrillées en vert et la position 
-actuelle de votre drône est surbrillée en rouge. Vous pouvez continuer à vous déplacer après avoir activer le laser de votre drône si il vous reste des point d'actions. 
+actuelle de votre drône est surbrillée en rouge. Vous pouvez continuer à vous déplacer après avoir activé le laser de votre drône s'il vous reste des points d'action. 
 Vous pouvez à tout moment passer la fin de votre tour de jeu en appuyant sur la touche ``s'' de votre clavier.
 
 \subsection{Chat}
-Un chat est à votre disposition pour toute conversation où tentative de triche avec vos adversaires.
+Un chat est à votre disposition pour toute conversation ou tentative de triche avec vos adversaires.
 \newline
 \newline
 Bon jeu.
@@ -49,7 +49,7 @@ Le client se présente sous la forme d'un fichier \emph{main.py}, de deux dossie
 \subsection{Socket}
 Dans \emph{mysocket.py} on trouve la fonction \emph{readline} 
 qui permet la lecture sur socket. Cette fonction utilise le mécanisme de ``generator'' python pour retourner ligne par ligne 
-les lectures faites sur le socket. C'est une petite surcouche au socket fourni par la librairie standard python qui ne permettait pas cette 
+les lectures faites sur le socket. C'est une petite surcouche au socket fournie par la librairie standard python qui ne permettait pas cette 
 lecture ligne à ligne et qui m'a valu pas mal de bug.
 
 \subsection{Bouton}
@@ -59,19 +59,18 @@ Par exemple, une case peut être avec un sous-marin, touché et rouge (car sous 
 
 \subsection{Client}
 Le principal du code se trouve dans le dossier \emph{client}, notamment dans le fichier \emph{controler.py}.
-On y trouve une classe prinicpale \emph{Controler} qui initialise l'interface graphique (UI) et est un gestionnaire d'événements pour procèder à tous les traitements graphiques, 
+On y trouve une classe principale \emph{Controler} qui initialise l'interface graphique (UI) et sert de gestionnaire d'événements pour procéder à tous les traitements graphiques, 
 ainsi que trois autres classes : 
 \emph{WaitPlayers}, \emph{PutShip} et \emph{Action}. Chacune de ces classes hérite de \emph{threading.Thread}, équivalent Java de 
 \emph{Thread}, ce qui permet de ne pas bloquer l'UI lors de l'attente d'événements tels que la réponse du serveur ou l'appui d'un bouton. 
 Ces classes gèrent chacune une phase de jeu d'une partie de ``Bataille Navale Royale''.
-La structure globale de ces classes est une boucle qui lit sur le socket à chaque itéraion et attend, en fonction de la phase de jeu, une ou des commandes particulières du serveur. 
+La structure globale de ces classes est une boucle qui lit sur le socket à chaque itération et attend, en fonction de la phase de jeu, une ou des commandes particulières du serveur. 
 \newline
 Le code contenu dans \emph{view.py} est le code l'UI, il se compose donc de 256 boutons sous forme de quadrillage (la grille de jeu) et d'une zone de chat surmontée par la liste 
 des joueurs présents dans la partie.
 \newline
-Cette partie du code utilise massivement le recours aux \emph{threading.Event} fourni par Python, qui permette une synchronisation entre thread et 
-aux événements fourni par wxPython , qui permette une communication entre les trheads et l'UI (et permettant de délivrer des objets directements aux 
-destinataires).
+Cette partie du code utilise les \emph{threading.Event} fourni par Python, qui permettent une synchronisation entre thread, mais aussi les 
+événements fournis par wxPython, qui permettent une communication entre les threads et l'UI par passage d'objets.
 
 \subsection{Connection}
 Le dossier \emph{connection} contient le code de la première fenêtre que vous trouverez en lançant le client. 
@@ -79,18 +78,18 @@ le fichier \emph{connection/view.py} contient l'interface, tandis que le fichier
 la phase de communication avec le serveur et la gestion des événements graphiques.
 
 \section{Conclusion}
-L'architecture de mon client et loin d'être parfaite, elle est assez monolithique et donc peu modulable, mais elle a quand même eue un avantage :
-la gestion du recommencement de partie, le client n'a qu'a tué la fenêtre de jeu et en relancer une nouvelle.
-Les extensions demandés et implémentées sont le ``REGISTER/'' et le chat.
+L'architecture de mon client et loin d'être parfaite, elle est assez monolithique et donc peu modulable, mais elle a quand même eu un avantage :
+la gestion du recommencement de partie, le client n'a qu'à tuer la fenêtre de jeu et en relancer une nouvelle.
+Les extensions demandées et implémentées sont la gestion du ``REGISTER/LOGIN/ACCESSDENIED'' et le chat.
 \newline
 Mes principales difficultés ont été la connaissance du langage et de la programmation d'interface graphique. 
-J'avais choisi le langage Python malgré le fait que je ne le connaissais que très peu car il me semblait simple et rapide de codé avec. 
-Ce sentiment m'est confirmé. Pour la conception d'interface graphique, cela a été un peu plus délicat car quelques bugs résident encore dans 
-wxPython, mais globalement cela c'est bien passé grâce aux forums utilisateurs.
+J'avais choisi le langage Python malgré le fait que je ne le connaissais que très peu car il me semblait simple et rapide de coder avec. 
+Ce sentiment s'est confirmé. Pour la conception d'interface graphique, cela a été un peu plus délicat car quelques bugs résident encore dans 
+wxPython, mais globalement cela s'est bien passé grâce aux forums utilisateurs.
 
 \section{Remerciements}
 Je remercie tous les anonymes (ou pas) qui ont répondu sur des questions liées à Python
  (surtout ses sockets) et à wxPython. Je remercie aussi mes camarades de projet pour le travail remarquable qu'ils ont fait et 
-leur soutien pendant les longues nuits blanches de désespoir commun que l'on a passé.
+leur soutien pendant les longues nuits blanches de désespoir commun que l'on a passées.
 
 \end{document}
