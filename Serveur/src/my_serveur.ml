@@ -39,6 +39,8 @@ let clients_mutex = Mutex.create ()
 let map_mutex = Mutex.create ()
 let cmd_mutex = Mutex.create ()
 
+let logins_mutex = Mutex.create ()
+
 let start_cond = Condition.create ()
 
 let trace_flag = ref false
@@ -278,42 +280,83 @@ struct
     if not (Sys.file_exists "./logins.txt") then
       ignore (open_out "logins.txt")
 
+  let skip_lines n chan =
+    for i = 1 to n do
+      ignore (input_line chan)
+    done
+
     let check_connect name = 
       if !trace_flag then Printf.printf "TRACE : checking login %s\n%!" name;
       let chan = open_in "logins.txt" in
 	try
-	  let cont = ref true in
-	    while !cont do
-	      let ligne = my_split (input_line chan) in
-		assert ((List.length ligne) = 2);
-		if (List.hd ligne) = name then cont := false
-	    done;
-	    if !trace_flag then Printf.printf "TRACE : Login %s is already used\n%!" name;
-	    !cont
+	  while input_line chan <> name do skip_lines 3 chan done;
+	  if !trace_flag then Printf.printf "TRACE : Login %s is already used\n%!" name;
+	  false
 	with
 	  | End_of_file ->
 	      if !trace_flag then Printf.printf "TRACE : Login %s is available\n%!" name;true
-	  | Assert_failure _ ->
-	      if !trace_flag then Printf.printf "TRACE.exn -> malformed logins file\n%!"; false
 
     let check_login name pswd =
       if !trace_flag then Printf.printf "TRACE : checking login %s with pswd %s\n%!" name pswd;
       let chan = open_in "logins.txt" in
-	try
-	  while input_line chan <> (name^"/"^pswd) do () done;
-	  true
-	with
-	  | End_of_file -> false
+      try
+	while input_line chan <> name do skip_lines 3 chan done;
+	assert (input_line chan = pswd);
+	true
+      with
+	| End_of_file -> false
+	| Assert_failure _ ->
+	  if !trace_flag then Printf.printf "TRACE : wrong password (%s) for login %s\n%!" pswd name;
+	  false
 
     let add name pswd =
       let chan = open_out_gen [Open_append] 0 "logins.txt" in
-      output_string chan (Printf.sprintf "%s/%s\n" name pswd);
+      output_string chan (Printf.sprintf "%s\n" name);
+      output_string chan (Printf.sprintf "%s\n" pswd);
+      output_string chan "0\n";
+      output_string chan "0\n";
       flush chan
-	  
+
+    let update_wins name win_loss =
+      Mutex.lock logins_mutex;
+      begin
+	let inchan = open_in "logins.txt" in
+	try
+	  while input_line inchan <> name do skip_lines 3 inchan done;
+	  skip_lines (if win_loss then 1 else 2) inchan;
+	  let pos  = pos_in inchan and nb = int_of_string (input_line inchan) in
+	  Printf.printf "TRACE.tmp : pos %d, nb %d\n%!" pos nb;
+	  let outchan = open_out_gen [Open_wronly] 0 "logins.txt" in
+	  seek_out outchan pos;
+	  output_string outchan (Printf.sprintf "%d\n" (nb + 1));
+	  flush outchan
+	with
+	  | End_of_file -> Printf.printf "TRACE : user %s is not registred\n%!" name
+	  | Failure "int_of_string" -> Printf.printf "TRACE.exn : malformed logins file\n%!"
+      end;
+      Mutex.unlock logins_mutex
+
+    let file_to_list () =
+      let res = ref [] in
+	try
+	  let chan = open_in "logins.txt" in
+	    
+	    while true do
+	      let player = (input_line chan, 
+			    begin ignore(input_line chan); input_line chan end,
+			    input_line chan)
+	      in
+		res := player::!res
+	    done;
+	    assert false
+	with
+	  | End_of_file -> (List.rev !res)
+	  | _ -> !res
+
+    let print_file_list l =
+      List.iter (fun (loss,win,name) -> Printf.printf "Player %s has %s wins and %s loss.\n%!" name win loss) l
 
   end
-
-
 
 
 
@@ -352,8 +395,9 @@ struct
   
   let timer = ref None
 
-    let start_game () =
+  let start_game () =
       Mutex.lock clients_mutex;
+      timer := None;
       let names = Utils.names() in
       List.iter (fun c -> my_output_line c.chan (Printf.sprintf "PLAYERS%s/\n" names)) !clients;
       add_cmd [Printf.sprintf "PLAYERS%s" names];
@@ -368,7 +412,7 @@ struct
 	| Some th ->
 	  if th = Thread.self () then
 	    begin
-	      Printf.printf "Fin des 30 secondes, la partie va commencer\n%!";
+	      if !trace_flag then Printf.printf "Fin des 30 secondes, la partie va commencer\n%!";
 	      start_game()
 	    end
 	  else
@@ -668,6 +712,7 @@ module Game =
 		begin
 		  client.phase <- DEAD;
 		  send_to_all (Printf.sprintf "DEATH/%s/\n" name);
+		  Register.update_wins client.nom false;
 		  game_over := name::!game_over
 		end
 	    )
@@ -677,8 +722,10 @@ module Game =
 	    match !game_over with
 	      | [] -> raise Uncorrect_action
 	      | [_] ->
-		  send_to_all (Printf.sprintf "AWINNERIS/%s/\n" (List.find (fun c -> c.phase <> DEAD) !clients).nom);
-		  End_of_game.end_game ();
+		let winner = (List.find (fun c -> c.phase <> DEAD) !clients).nom in
+		send_to_all (Printf.sprintf "AWINNERIS/%s/\n" winner);
+		Register.update_wins winner true;
+		End_of_game.end_game ();
 	      | _ -> send_to_all "DRAWGAME/\n";End_of_game.end_game ()
 	    
     
@@ -795,6 +842,8 @@ let rec main_joueur s_descr =
 	    | 4 -> Connexion.timer := None; Connexion.start_game ()
 	    | _ -> ()
 	end
+      | _, "UPDATE"::"WIN"::_ -> Register.update_wins client.nom true
+      | _, "UPDATE"::"LOSS"::_ -> Register.update_wins client.nom false
       | _, [] ->
 	if !trace_flag then Printf.printf "TRACE.exn : maxi relou command incoming\n%!";
 	Stop.stop_thread_client ~timer:Connexion.timer s_descr
@@ -837,11 +886,81 @@ let main_client s_descr =
 
 
 
+(**********************************************************************)
+(************************* STATS HTTP SERVER **************************)
+(**********************************************************************)
+
+let header =
+  "HTTP/1.1 200 OK
+Content-Type : text/HTML; charset=UTF 8
+
+<!DOCTYPE html><html><head><title>Statistiques du jeu</title></head>
+<body>
+<style>
+table
+{
+    border-collapse: collapse; /* Les bordures du tableau seront collées (plus joli) */
+}
+td
+{
+    border: 1px solid black;
+}
+</style>"
+
+let footer =
+  "</body></html>
+"
+
+let print_stats () =
+  let list_players = Register.file_to_list () in
+    "<table><tr><th>login</th><th>nb victoires</th><th>nb defaites</th><th>stats</th></tr>"^
+      (List.fold_left (^) ""
+	 (List.map (function (loss,win,name) -> 
+		      let stats = 100. *. (float_of_string win) /.
+			(float_of_int 
+			   ((int_of_string loss) + (int_of_string win))) in
+		      Printf.sprintf 
+			"<tr><td>%s</td><td>%s</td><td>%s</td><td>%.2f%%</td></tr>"
+			name win loss stats) list_players))
+    ^"</table>"		   
+
+let html_page () =
+  header^
+    (print_stats ())^
+    footer
+    
 
 
-
-
-
+let start_stats_server () =
+  let sock = ThreadUnix.socket Unix.PF_INET Unix.SOCK_STREAM 0 
+  and port = 2092 in
+    begin
+      Unix.setsockopt sock Unix.SO_REUSEADDR true;
+      Unix.bind sock (Unix.ADDR_INET(!serv_addr, port));
+      Unix.listen sock 3
+    end;
+    while true do
+      try
+	let (s_desc, _) = ThreadUnix.accept sock in
+	  ignore 
+	    (Thread.create 
+	       (fun () ->
+		  let cpt = ref 0 in
+		    while !cpt < 2 do
+		      let line_read = (my_input_line s_desc) in
+			print_newline ();
+			(if !cpt = 0 && string_match (regexp "^GET") line_read 0 then
+			   incr cpt);
+			(if !cpt = 1 && (int_of_char line_read.[0]) = 13 then
+			   incr cpt);
+		    done;
+		    let html = html_page () in
+		      ignore (ThreadUnix.write s_desc html 0 (String.length html));
+		    Unix.close s_desc
+	       ) ())
+      with
+	| e -> print_endline (Printexc.to_string e);
+    done
 
 
 
@@ -919,4 +1038,6 @@ let () =
     )
     (fun s -> failwith "Unkown argument\n")
     "Launches a battleship server, default address is localhost.";
+  ignore (Thread.create start_stats_server ());
+  Register.print_file_list (Register.file_to_list ());
   Unix.handle_unix_error go_serv ()
