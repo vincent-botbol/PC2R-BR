@@ -21,8 +21,8 @@ un binding pour lui. La librairie graphique choisie est wxPython, s'appuyant sur
 Ce choix Python/wxPython garantit la portabilité du client et facilite un peu sa conception.
 
 \section{Manuel d'utilisation}
-\subsection{Connection}
-La connection se fait en entrant l'adresse du serveur ainsi que son pseudo. Dans le cas où vous choisiriez un mot de passe le client 
+\subsection{Connexion}
+La connexion se fait en entrant l'adresse du serveur ainsi que son pseudo. Dans le cas où vous choisiriez un mot de passe le client 
 vous demandera si vous êtes déjà inscrit, si non il le fait pour vous (en envoyant ``REGISTER/'' à la place de ``LOGIN/''). Dans le cas où vous seriez déjà 
 inscrit ou que vous vous seriez trompé de mot de passe, le serveur vous refoulera et vous devrez réessayer.
 
@@ -48,8 +48,7 @@ Le client se présente sous la forme d'un fichier \emph{main.py}, de deux dossie
 
 \subsection{Socket}
 Dans \emph{mysocket.py} on trouve la fonction \emph{readline} 
-qui permet la lecture sur socket. Cette fonction utilise le mécanisme de ``generator'' python pour retourner ligne par ligne 
-les lectures faites sur le socket. C'est une petite surcouche au socket fournie par la librairie standard python qui ne permettait pas cette 
+qui permet la lecture sur socket. C'est une petite surcouche au socket fournie par la librairie standard python qui ne permettait pas cette 
 lecture ligne à ligne et qui m'a valu pas mal de bug.
 
 \subsection{Bouton}
@@ -88,8 +87,6 @@ Ce sentiment s'est confirmé. Pour la conception d'interface graphique, cela a �
 wxPython, mais globalement cela s'est bien passé grâce aux forums utilisateurs.
 
 \section{Remerciements}
-Je remercie tous les anonymes (ou pas) qui ont répondu sur des questions liées à Python
- (surtout ses sockets) et à wxPython. Je remercie aussi mes camarades de projet pour le travail remarquable qu'ils ont fait et 
-leur soutien pendant les longues nuits blanches de désespoir commun que l'on a passées.
+Je remercie tous les anonymes (ou pas) qui ont répondu à des questions liées à Python (surtout ses sockets) et à wxPython.
 
 \end{document}
