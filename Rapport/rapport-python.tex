@@ -1,0 +1,76 @@
+\documentclass[a4paper, 11pt]{report}
+
+\addtolength{\hoffset}{-1cm}
+\addtolength{\textwidth}{2cm}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+
+
+\begin{document}
+
+\chapter{Client Python - Matthieu Dien}
+
+\section{Choix Techniques}
+
+Pour ce client, le choix du langage d'implémentation a été Python car c'est un langage haut niveau, simple, 
+avec une librairie satndard très fournie et dont une majorité de librairie graphique implémente
+un binding pour lui. La librairie graphique choisie est wxPython, s'appuyant sur wxWidgets (écrite en C++), elle est libre, portable 
+(disponible à l'ARI), complète (nombreux widgets) et simple d'utilisation.
+Ce choix Python/wxPython garantit la portabilité du client et facilite un peu sa conception.
+
+\section{Implémentation}
+
+Le client se présente sous la forme d'un fichier \emph{main.py}, de deux dossiers 
+\emph{connection} et \emph{client}, ainsi que de deux fichiers
+\emph{mybuttons.py} et \emph{mysocket.py}.
+
+\subsection{Socket}
+Dans \emph{mysocket.py} on trouve la fonction \emph{readline} 
+qui permet la lecture sur socket. Cette fonction utilise le mécanisme de ``generator'' python pour retourner ligne par ligne 
+les lectures faites sur le socket. C'est une petite surcouche au socket fourni par la librairie standard python qui ne permettait pas cette 
+lecture ligne à ligne et qui m'a valu pas mal de bug.
+
+\subsection{Bouton}
+Dans \emph{mybuttons.py} on trouve une surcouche au ``BitmapButton'' qui permet la gestion des différents types de 
+case que l'on peut rencontrer durant la partie en utilisant un système de ``flag'' binaire pour pouvoir ajouter facilement des caractéristiques aux cases.
+Par exemple, une case peut être avec un sous-marin, touché et rouge (car sous le drône).
+
+\subsection{Client}
+Le principal du code se trouve dans le dossier \emph{client}, notamment dans le fichier \emph{controler.py}.
+On y trouve une classe prinicpale \emph{Controler} qui initialise l'interface graphique (UI) et est un gestionnaire d'événements pour procèder à tous les traitements graphiques, 
+ainsi que trois autres classes : 
+\emph{WaitPlayers}, \emph{PutShip} et \emph{Action}. Chacune de ces classes hérite de \emph{threading.Thread}, équivalent Java de 
+\emph{Thread}, ce qui permet de ne pas bloquer l'UI lors de l'attente d'événements tels que la réponse du serveur ou l'appui d'un bouton. 
+Ces classes gèrent chacune une phase de jeu d'une partie de ``Bataille Navale Royale''.
+La structure globale de ces classes est une boucle qui lit sur le socket à chaque itéraion et attend, en fonction de la phase de jeu, une ou des commandes particulières du serveur. 
+\newline
+Le code contenu dans \emph{view.py} est le code l'UI, il se compose donc de 256 boutons sous forme de quadrillage (la grille de jeu) et d'une zone de chat surmontée par la liste 
+des joueurs présents dans la partie.
+\newline
+Cette partie du code utilise massivement le recours aux \emph{threading.Event} fourni par Python, qui permette une synchronisation entre thread et 
+aux événements fourni par wxPython , qui permette une communication entre les trheads et l'UI (et permettant de délivrer des objets directements aux 
+destinataires).
+
+\subsection{Connection}
+Le dossier \emph{connection} contient le code de la première fenêtre que vous trouverez en lançant le client. 
+le fichier \emph{connection/view.py} contient l'interface, tandis que le fichier \emph{connection/controler.py} contient 
+la phase de communication avec le serveur et la gestion des événements graphiques.
+
+\section{Conclusion}
+L'architecture de mon client et loin d'être parfaite, elle est assez monolithique et donc peu modulable, mais elle a quand même eue un avantage :
+la gestion du recommencement de partie, le client n'a qu'a tué la fenêtre de jeu et en relancer une nouvelle.
+Les extensions demandés et implémentées sont le ``REGISTER/'' et le chat.
+\newline
+Mes principales difficultés ont été la connaissance du langage et de la programmation d'interface graphique. 
+J'avais choisi le langage Python malgré le fait que je ne le connaissais que très peu car il me semblait simple et rapide de codé avec. 
+Ce sentiment m'est confirmé. Pour la conception d'interface graphique, cela a été un peu plus délicat car quelques bugs résident encore dans 
+wxPython, mais globalement cela c'est bien passé grâce aux forums utilisateurs.
+
+\section{Remerciements}
+Je remercie tous les anonymes (ou pas) qui ont répondu sur des questions liées à Python
+ (surtout ses sockets) et à wxPython. Je remercie aussi mes camarades de projet pour le travail remarquable qu'ils ont fait et 
+leur soutien pendant les longues nuits blanches de désespoir commun que l'on a passé.
+
+\end{document}
