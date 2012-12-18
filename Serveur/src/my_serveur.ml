@@ -338,23 +338,21 @@ struct
 
     let file_to_list () =
       let res = ref [] in
-	try
-	  let chan = open_in "logins.txt" in
-	    
-	    while true do
-	      let player = (input_line chan, 
-			    begin ignore(input_line chan); input_line chan end,
-			    input_line chan)
-	      in
-		res := player::!res
-	    done;
-	    assert false
-	with
-	  | End_of_file -> (List.rev !res)
-	  | _ -> !res
-
+      try
+	let chan = open_in "logins.txt" in
+	while true do
+	  let name = input_line chan
+	  and win = int_of_string (begin ignore(input_line chan); input_line chan end)
+	  and loss = int_of_string (input_line chan) in
+	  res := (name, win, loss)::!res
+	done;
+	assert false
+      with
+      | End_of_file -> (List.rev !res)
+      | _ -> !res
+	
     let print_file_list l =
-      List.iter (fun (loss,win,name) -> Printf.printf "Player %s has %s wins and %s loss.\n%!" name win loss) l
+      List.iter (fun (name,win,loss) -> Printf.printf "Player %s has %d wins and %d loss\n%!" name win loss) l
 
   end
 
@@ -913,17 +911,16 @@ let footer =
 
 let print_stats () =
   let list_players = Register.file_to_list () in
-    "<table><tr><th>login</th><th>nb victoires</th><th>nb defaites</th><th>stats</th></tr>"^
-      (List.fold_left (^) ""
-	 (List.map (function (loss,win,name) -> 
-		      let stats = 100. *. (float_of_string win) /.
-			(float_of_int 
-			   ((int_of_string loss) + (int_of_string win))) in
-		      Printf.sprintf 
-			"<tr><td>%s</td><td>%s</td><td>%s</td><td>%.2f%%</td></tr>"
-			name win loss stats) list_players))
-    ^"</table>"		   
-
+  "<table><tr><th>login</th><th>nb victoires</th><th>nb defaites</th><th>stats</th></tr>"^
+    (List.fold_left (^) ""
+       (List.map (function (name,loss,win) ->
+	 let stats = 100. *. (float_of_int win) /.
+	   ((float_of_int loss) +. (float_of_int win)) in
+	 Printf.sprintf 
+	   "<tr><td>%s</td><td>%d</td><td>%d</td><td>%.2f%%</td></tr>"
+	   name win loss stats) list_players))
+  ^"</table>" 
+    
 let html_page () =
   header^
     (print_stats ())^
@@ -945,24 +942,22 @@ let start_stats_server () =
 	  ignore 
 	    (Thread.create 
 	       (fun () ->
-		  let cpt = ref 0 in
-		    while !cpt < 2 do
-		      let line_read = (my_input_line s_desc) in
-			print_newline ();
-			(if !cpt = 0 && string_match (regexp "^GET") line_read 0 then
-			   incr cpt);
-			(if !cpt = 1 && (int_of_char line_read.[0]) = 13 then
-			   incr cpt);
-		    done;
-		    let html = html_page () in
-		      ignore (ThreadUnix.write s_desc html 0 (String.length html));
-		    Unix.close s_desc
+		 let cpt = ref 0 in
+		 while !cpt < 2 do
+		   let line_read = (my_input_line s_desc) in		   
+		   (if !cpt = 0 && string_match (regexp "^GET") line_read 0 then
+		       incr cpt);
+		   (if !cpt = 1 && (int_of_char line_read.[0]) = 13 then
+		       incr cpt);
+		 done;
+		 let html = html_page () in
+		 ignore (ThreadUnix.write s_desc html 0 (String.length html));
+		 Unix.close s_desc
 	       ) ())
       with
-	| e -> print_endline (Printexc.to_string e);
-    done
-
-
+      | e -> print_endline (Printexc.to_string e);
+    done   
+      
 
 (**********************************************************************)
 (****************   CLIENT / SERVOR   BASIC STUFFS   ******************)
@@ -1039,5 +1034,4 @@ let () =
     (fun s -> failwith "Unkown argument\n")
     "Launches a battleship server, default address is localhost.";
   ignore (Thread.create start_stats_server ());
-  Register.print_file_list (Register.file_to_list ());
   Unix.handle_unix_error go_serv ()
