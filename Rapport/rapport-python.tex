@@ -20,6 +20,26 @@ un binding pour lui. La librairie graphique choisie est wxPython, s'appuyant sur
 (disponible à l'ARI), complète (nombreux widgets) et simple d'utilisation.
 Ce choix Python/wxPython garantit la portabilité du client et facilite un peu sa conception.
 
+\section{Manuel d'utilisation}
+\subsection{Connection}
+La connection se fait en entrant l'adresse du serveur ainsi que son pseudo. Dnas le cas où vous choisiriez un mot de passe le client 
+vous demandera si vous êtes déjà inscrit, si non il le fait pour vous (en envoyant ``REGISTER/'' à la place de ``LOGIN/''). Dans le cas où vous seriez déjà 
+inscrit ou que vous vous sauriez tromper de mot de passe, le serveur vous refoulera et vous devrez réessayer.
+
+\subsection{Placement des bateaux}
+Le placement des bateaux se fait en cliquant sur les cases que vous voulez. Si vous vous trompez, le serveur vous demandera de réessayer.
+
+\subsection{Phase de jeu}
+Vous devez attendre votre tour pour vous déplacer. Vous ne pouvez vous déplacer que sur les cases surbrillées en vert et la position 
+actuelle de votre drône est surbrillée en rouge. Vous pouvez continuer à vous déplacer après avoir activer le laser de votre drône si il vous reste des point d'actions. 
+Vous pouvez à tout moment passer la fin de votre tour de jeu en appuyant sur la touche ``s'' de votre clavier.
+
+\subsection{Chat}
+Un chat est à votre disposition pour toute conversation où tentative de triche avec vos adversaires.
+\newline
+\newline
+Bon jeu.
+
 \section{Implémentation}
 
 Le client se présente sous la forme d'un fichier \emph{main.py}, de deux dossiers 

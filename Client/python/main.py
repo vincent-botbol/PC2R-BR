@@ -39,6 +39,8 @@ class  Main(wx.App):
             self.con = connection.Controler(self)
             self.Bind(wx.EVT_TOGGLEBUTTON, self.onConnect,source=self.con.viou.buttonEnter)
             self.Bind(wx.EVT_BUTTON, self.onQuit,source=self.con.viou.buttonQuit)
+            self.con.viou.loginEntry.SetValue(self.name)
+            self.con.viou.serveurEntry.SetValue(self.serVaddress)
 
         if l[0]=='WELCOME':
             self.name = l[1]
